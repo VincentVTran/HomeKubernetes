@@ -33,6 +33,7 @@ spec:
   type: LoadBalancer
   selector:
     app: nginx
+  loadBalancerIP: ${ASSIGNED_IP}
   ports:
   - port: 80
     targetPort: 80
