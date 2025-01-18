@@ -1,15 +1,21 @@
 SHELL := /bin/bash
-export $(shell sed 's/=.*//' .env)  # This exports all variables in .env
 
 # Define variables
 ENV_FILE = .env
 YAML_FILE = deployment.yaml
 
+# Load environment variables from .env file
+ifneq (,$(wildcard $(ENV_FILE)))
+    include $(ENV_FILE)
+    export $(shell sed 's/=.*//' $(ENV_FILE))
+endif
+
+# Build and push Docker image
 build-image:
 	docker build -t ${IMAGE_NAME} .
 	docker push ${IMAGE_NAME}
 
-# Target to deploy the application
+# Deploy application
 deploy:
-	# Load environment variables from .env and apply the YAML
-	set -a; source $(ENV_FILE); set +a; envsubst < $(YAML_FILE) | kubectl apply -f -
+	# Apply the YAML file with environment variable substitution
+	envsubst < $(YAML_FILE) | kubectl apply -f -
