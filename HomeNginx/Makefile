@@ -18,4 +18,5 @@ build-image:
 # Deploy application
 deploy:
 	# Apply the YAML file with environment variable substitution
+	-@kubectl delete -f ./ || true
 	envsubst < $(YAML_FILE) | kubectl apply -f -
