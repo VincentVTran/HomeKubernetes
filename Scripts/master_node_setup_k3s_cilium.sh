@@ -1,7 +1,5 @@
-export MASTER_IP=192.168.88.212
-export MASTER_PORT=6443
 
-curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
+sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
 
 export KUBECONFIG=~/.kube/config
 
@@ -13,6 +11,9 @@ chmod 600 "$KUBECONFIG"
 helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium --version 1.17.3 \
    --namespace kube-system \
+
+export MASTER_IP=192.168.88.206
+export MASTER_PORT=6443
 
 helm upgrade cilium cilium/cilium --version 1.17.3 \
    --namespace kube-system \

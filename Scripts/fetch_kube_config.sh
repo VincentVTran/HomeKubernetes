@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Variables — update these
-REMOTE_USER="k8master-1"
-REMOTE_HOST="192.168.88.212"
+REMOTE_USER="vincent-tran"
+REMOTE_HOST="192.168.88.206"
+
 REMOTE_K3S_CONFIG="/etc/rancher/k3s/k3s.yaml"
 LOCAL_KUBECONFIG="$HOME/.kube/config"
 
