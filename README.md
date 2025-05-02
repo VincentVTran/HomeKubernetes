@@ -1,10 +1,7 @@
 # Setting up kubernetes cluster using k3s
 ## To install control plane
-```
-curl -sfL https://get.k3s.io | sh - 
-# Check for Ready node, takes ~30 seconds 
-sudo k3s kubectl get node 
-```
+- Go to the /Scripts/master_node_setup_k3s_cilium.sh file.
+- Execute the script using `./master_node_setup_k3s_cilium.sh`
 
 ## To add node to dataplane
 - To get token data: sudo cat /var/lib/rancher/k3s/server/node-token
