@@ -1,0 +1,60 @@
+# https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-collector/values.yaml
+
+# 1) Deployment mode
+mode: deployment
+
+# 2) Use Contrib image for k8s_cluster & k8sattributes
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: "0.123.0"
+
+# # 3) Enable the Prometheus port (default 8888). Do NOT set a custom port here.
+# ports:
+#   prometheus:
+#     enabled: true       # exposes containerPort 8888 & Service port 8888 :contentReference[oaicite:1]{index=1}
+
+# 4) Expose via LoadBalancer at 192.168.2.20
+service:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.2.20
+
+ports:
+  prometheus:
+    enabled: true
+    containerPort: 8889
+    servicePort: 8889
+    hostPort: 8889
+    protocol: TCP
+
+# 5) GOMEMLIMIT + resource sizing
+useGOMEMLIMIT: true
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+
+# 6) Collector configuration
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc: {}
+        http: {}
+    k8s_cluster:
+      auth_type: serviceAccount
+  processors:
+    batch: {}
+    k8sattributes:
+      auth_type: serviceAccount
+  exporters:
+    prometheus:
+      endpoint: "0.0.0.0:8889"    # must match the chart’s default :contentReference[oaicite:2]{index=2}
+  service:
+    pipelines:
+      metrics:
+        receivers: [otlp, k8s_cluster]
+        processors: [batch, k8sattributes]
+        exporters: [prometheus]

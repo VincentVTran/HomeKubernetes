@@ -3,9 +3,9 @@
         <title>My Apartment Homepage</title>
         <style>
             body {
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f9;
-                color: #333;
+                font-family: 'Arial', sans-serif;
+                background: linear-gradient(135deg, #4CAF50, #81C784);
+                color: #fff;
                 margin: 0;
                 padding: 0;
                 display: flex;
@@ -13,29 +13,62 @@
                 align-items: center;
                 justify-content: center;
                 height: 100vh;
+                overflow: hidden;
+                animation: fadeIn 1.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
             }
             h1 {
-                color: #4CAF50;
+                color: #fff;
+                font-size: 3em;
+                margin-bottom: 20px;
+                animation: slideDown 1s ease-out;
+            }
+            @keyframes slideDown {
+                from {
+                    transform: translateY(-50px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
             }
             ul {
                 list-style-type: none;
                 padding: 0;
+                animation: fadeIn 2s ease-in-out;
             }
             li {
-                margin: 10px 0;
+                margin: 15px 0;
+                transform: scale(0.9);
+                transition: transform 0.3s ease, color 0.3s ease;
+            }
+            li:hover {
+                transform: scale(1);
+                color: #FFEB3B;
             }
             a {
                 text-decoration: none;
-                color: #007BFF;
+                color: #FFEB3B;
                 font-weight: bold;
+                font-size: 1.2em;
+                transition: color 0.3s ease;
             }
             a:hover {
-                text-decoration: underline;
+                color: #FFC107;
             }
             footer {
                 margin-top: 20px;
                 font-size: 0.9em;
-                color: #666;
+                color: #ddd;
+                animation: fadeIn 3s ease-in-out;
             }
         </style>
     </head>

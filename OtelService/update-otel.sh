@@ -1,0 +1,1 @@
+helm upgrade otel-collector open-telemetry/opentelemetry-collector --namespace otel --values values.yaml
