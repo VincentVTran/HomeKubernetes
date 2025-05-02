@@ -1,4 +1,4 @@
-# Bind container networking to the host so 0.0.0.0:8889 → 192.168.2.20:8889
+# https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
 service:
   type: "LoadBalancer"
   loadBalancerIP: 192.168.2.21
@@ -13,31 +13,54 @@ datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
-      - name: OtelCollector
+      - name: "Prometheus Server"
         type: prometheus
         access: proxy
-        url: http://192.168.2.20:8889   # OTEL Collector endpoint
+        url: http://prometheus-server.prometheus.svc.cluster.local:80
         isDefault: true
         jsonData:
           timeInterval: "15s"
 
-# # Define dashboard providers
-# dashboardProviders:
-#   dashboardproviders.yaml:
-#     apiVersion: 1
-#     providers:
-#       - name: default
-#         orgId: 1
-#         folder: ""
-#         type: file
-#         disableDeletion: false
-#         editable: true
-#         options:
-#           path: /var/lib/grafana/dashboards/default
+persistence:
+  type: pvc
+  enabled: true
+  # storageClassName: default
+  ## (Optional) Use this to bind the claim to an existing PersistentVolume (PV) by name.
+  volumeName: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 2Gi
+  # annotations: {}
+  finalizers:
+    - kubernetes.io/pvc-protection
+  extraPvcLabels: {}
+  disableWarning: false
+
+  ## If persistence is not enabled, this allows to mount the
+  ## local storage in-memory to improve performance
+  ##
+  inMemory:
+    enabled: false
+  lookupVolumeName: true
+
+# Define dashboard providers
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        editable: true
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards/default
 
 # Supply dashboards by Grafana.com ID
 dashboards:
   default:
-    k8s-cluster:
-      gnetId: 6417               # Kubernetes Cluster (Prometheus) :contentReference[oaicite:7]{index=7}
-      datasource: OtelCollector
+    k8-cluster-dashboard:
+      gnetId: 315
+      datasource: "Prometheus Server"

@@ -15,8 +15,12 @@ image:
 
 # 4) Expose via LoadBalancer at 192.168.2.20
 service:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.2.20
+  type: ClusterIP
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8889"
+  prometheus.io/path: "/metrics"
 
 ports:
   prometheus:
@@ -55,6 +59,38 @@ config:
   service:
     pipelines:
       metrics:
-        receivers: [otlp, k8s_cluster]
-        processors: [batch, k8sattributes]
+        # receivers: [otlp, k8s_cluster]
+        # processors: [batch, k8sattributes]
+        # exporters: [prometheus]
+        receivers: [otlp]
+        processors: [batch]
         exporters: [prometheus]
+
+clusterRole:
+  create: false
+  annotations: {}
+  name: "otel-collector"
+  rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - nodes
+      - namespaces
+      - services
+      - endpoints
+      - events
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources:
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+
+  clusterRoleBinding:
+    annotations: {}
+    name: "otel-collector"
