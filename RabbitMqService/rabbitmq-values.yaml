@@ -1,0 +1,93 @@
+## Image settings
+image:
+  registry: docker.io
+  repository: bitnami/rabbitmq      # Official Bitnami RabbitMQ image
+  tag: 4.1.0-debian-12-r0
+  pullPolicy: IfNotPresent
+
+## Authentication and plugins
+auth:
+  username: admin
+  password: "admin-ui-password"
+  erlangCookie: "application-password"
+
+  # must be a single, quoted, space-separated string:
+  plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
+  communityPlugins: ""                      # or any URLs/names, space-separated
+  extraPlugins: "rabbitmq_auth_backend_ldap"
+
+service:
+  type: LoadBalancer
+  portEnabled: true
+
+## Persistence configuration
+persistence:
+  enabled: true
+  size: 4Gi
+
+## Resource requests and limits
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 100m
+  limits:
+    memory: 512Mi
+    cpu: 200m
+
+## RabbitMQ cluster settings
+clustering:
+  enabled: true
+  replicaCount: 2
+  forceBoot: false
+  formationTimeout: 120
+  updateInterval: 10
+  rebalance: true                   # Rebalance master for queues when replicas join
+
+## Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+## Metrics for Prometheus
+containerPorts:
+  metrics: 15692                    # Exposes Prometheus metrics on this port
+metrics:
+  enabled: true
+  plugins: "rabbitmq_prometheus"
+  serviceMonitor:
+    enabled: false                  # Disabled until Prometheus Operator CRDs are installed
+    interval: 30s
+    scrapeTimeout: 10s
+    namespace: monitoring
+
+## High Availability
+highAvailability:
+  enabled: true
+  queue:
+    type: quorum
+
+## Security settings
+security:
+  enabled: true
+  fipsMode: false
+  tls:
+    enabled: false
+    existingSecretForCerts: ""
+    caCertificate: ca.crt
+    serverCertificate: tls.crt
+    serverKey: tls.key
+    generateCertificate: false
+
+## Update strategy
+updateStrategy:
+  type: RollingUpdate
+
+## Pod annotations (for Prometheus scraping)
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "15692"      # Matches containerPorts.metrics
+  prometheus.io/path: "/metrics"
+
+## RBAC settings
+rbac:
+  create: true

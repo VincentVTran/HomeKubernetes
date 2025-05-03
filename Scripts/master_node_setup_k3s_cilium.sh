@@ -1,5 +1,5 @@
 # For Ubuntu
-sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -s - --resolv-conf /run/systemd/resolve/resolv.conf
+sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable=network-policy,servicelb' sh -s - --resolv-conf /run/systemd/resolve/resolv.conf
 
 # For non-Ubuntu
 # sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
@@ -23,7 +23,8 @@ helm install cilium cilium/cilium --version 1.17.3 \
    --set kubeProxyReplacement=true \
    --set k8sServiceHost=$MASTER_IP \
    --set k8sServicePort=$MASTER_PORT \
-   --set externalIPs.enabled=true
+   --set externalIPs.enabled=true \
+   --set operator.replicas=1
 
 # https://github.com/k3s-io/k3s/issues/5349
 # Stop and disable UFW right away
