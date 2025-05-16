@@ -2,5 +2,4 @@
 helm upgrade otel-collector open-telemetry/opentelemetry-collector \
     --namespace otel \
     --create-namespace \
-    --set podAnnotations.restartTimestamp=$(date +%s) \
     --values ./otel-values.yaml

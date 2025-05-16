@@ -19,6 +19,13 @@ auth:
 service:
   type: LoadBalancer
   portEnabled: true
+  ports:
+    amqp: 5672
+    amqpTls: 5671
+    dist: 25672
+    manager: 15672
+    metrics: 9419
+    epmd: 4369
 
 ## Persistence configuration
 persistence:
@@ -85,7 +92,7 @@ updateStrategy:
 ## Pod annotations (for Prometheus scraping)
 podAnnotations:
   prometheus.io/scrape: "true"
-  prometheus.io/port: "15692"      # Matches containerPorts.metrics
+  prometheus.io/port: "9419"      # Matches containerPorts.metrics
   prometheus.io/path: "/metrics"
 
 ## RBAC settings
