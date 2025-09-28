@@ -1,5 +1,5 @@
 # For Ubuntu
-sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable=network-policy,servicelb' sh -s - --resolv-conf /run/systemd/resolve/resolv.conf
+sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable=network-policy,servicelb,traefik' sh -s - --resolv-conf /run/systemd/resolve/resolv.conf
 
 # For non-Ubuntu
 # sudo curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-network-policy' sh -
