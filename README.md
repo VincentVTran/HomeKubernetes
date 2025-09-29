@@ -1,6 +1,6 @@
 # Setting up kubernetes cluster using k3s
 ## To install control plane
-- Go to the /Scripts/master_node_setup_k3s_cilium.sh file.
+- Go to the /ClusterSetupScripts/master_node_setup_k3s_cilium.sh file.
 - Execute the script using `./master_node_setup_k3s_cilium.sh`
 
 ## To add node to dataplane
@@ -15,7 +15,10 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${CONTROL_PLANE_IP}:6443 K3S_TOKE
 ## Getting Kube Config
 - `sudo cat /etc/rancher/k3s/k3s.yaml` (Upload this to $HOME/.kube/config)
 
-# Setting up bare-metal load balancing
+# Setting up L2 announcement for LAN external IPs
+- `kubectl apply -f ./ClusterSetupScripts/CiliumConfig/`
+
+# Setting up bare-metal load balancing (alternative)
 ## Installing Metallb
 - `sudo ./MetallbConfig/install-metallb.sh`
 
