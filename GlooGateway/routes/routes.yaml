@@ -1,13 +1,22 @@
 apiVersion: gateway.solo.io/v1
 kind: VirtualService
 metadata:
-  name: grafana-vs
+  name: main-vs
   namespace: gloo-system
 spec:
   virtualHost:
     domains:
     - '*'                # match any Host header (or use grafana.example.local)
     routes:
+    - matchers:
+      - prefix: /prometheus
+      routeAction:
+        single:
+          kube:
+            ref:
+              name: prometheus-server
+              namespace: prometheus
+            port: 80
     - matchers:
       - prefix: /grafana
       routeAction:

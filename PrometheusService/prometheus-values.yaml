@@ -3,13 +3,15 @@
 # Server configurations
 server:
   enabled: true
+  prefixURL: /prometheus
+  baseURL: /prometheus
   persistentVolume:
     enabled: true
     size: 2Gi
   retention: 1d
-  service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.2.3
+  # service:
+  #   type: LoadBalancer
+  #   loadBalancerIP: 192.168.2.3
 # Disable other prometheus services
 alertmanager:
   enabled: false
@@ -155,3 +157,6 @@ serverFiles:
           - source_labels: [__meta_kubernetes_service_name]
             action: replace
             target_label: kubernetes_service_name
+
+# web:
+#   route-prefix: /

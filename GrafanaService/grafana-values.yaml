@@ -26,7 +26,7 @@ datasources:
       - name: "Prometheus Server"
         type: prometheus
         access: proxy
-        url: http://prometheus-server.prometheus.svc.cluster.local:80
+        url: http://prometheus-server.prometheus.svc.cluster.local:80/prometheus
         isDefault: true
         jsonData:
           timeInterval: "15s"
