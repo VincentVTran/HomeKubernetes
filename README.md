@@ -18,7 +18,6 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${CONTROL_PLANE_IP}:6443 K3S_TOKE
 # Setting up bare-metal load balancing
 ## Installing Metallb
 - `sudo ./MetallbConfig/install-metallb.sh`
-- `kubectl apply -f ./MetallbConfig/` to install the metal lb configurations
 
 # Installing Home NGINX Into Cluster
 ## To build
