@@ -1,0 +1,21 @@
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: grafana-vs
+  namespace: gloo-system
+spec:
+  virtualHost:
+    domains:
+    - '*'                # match any Host header (or use grafana.example.local)
+    routes:
+    - matchers:
+      - prefix: /grafana
+      options:
+        prefixRewrite: /   # strip /grafana before forwarding to Grafana
+      routeAction:
+        single:
+          kube:
+            ref:
+              name: grafana       # k8s Service name in grafana namespace
+              namespace: grafana
+            port: 80              # service port (adjust if Grafana uses other port)

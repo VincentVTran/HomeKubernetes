@@ -1,0 +1,22 @@
+global:
+  # set to false for cluster-wide RBAC so Gloo can watch resources across namespaces
+  glooRbac:
+    namespaced: false
+
+settings:
+  writeNamespace: gloo-system
+  # empty list => watch all namespaces
+  watchNamespaces: []
+
+gloo:
+  gateway:
+    readGatewaysFromAllNamespaces: true
+
+discovery:
+  enabled: true
+
+gatewayProxies:
+  gatewayProxy:
+    service:
+      type: LoadBalancer
+      loadBalancerIP: 192.168.2.4
