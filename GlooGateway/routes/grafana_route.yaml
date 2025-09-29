@@ -12,8 +12,6 @@ spec:
       - prefix: /grafana
       routeAction:
         single:
-          kube:
-            ref:
-              name: grafana       # k8s Service name in grafana namespace
-              namespace: grafana
-            port: 80              # service port (adjust if Grafana uses other port)
+          upstream:
+            name: grafana-grafana-80 # Namespace-Service-Port #
+            namespace: gloo-system
