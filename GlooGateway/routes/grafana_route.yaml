@@ -10,8 +10,6 @@ spec:
     routes:
     - matchers:
       - prefix: /grafana
-      options:
-        prefixRewrite: /   # strip /grafana before forwarding to Grafana
       routeAction:
         single:
           kube:

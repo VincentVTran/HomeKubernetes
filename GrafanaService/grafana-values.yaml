@@ -8,6 +8,16 @@ sidecar:
   datasources:
     enabled: true           # :contentReference[oaicite:4]{index=4}
 
+# Configure server root URL for dynamic subpath handling
+grafana.ini:
+  server:
+    root_url: /grafana
+    serve_from_sub_path: true
+
+# Skip init container chown since PVC may already have correct permissions
+initChownData:
+  enabled: false
+
 # Inline provisioning of datasources
 datasources:
   datasources.yaml:
