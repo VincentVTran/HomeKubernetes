@@ -13,7 +13,7 @@ gloo:
     readGatewaysFromAllNamespaces: true
 
 discovery:
-  enabled: true
+  enabled: false
 
 gatewayProxies:
   gatewayProxy:

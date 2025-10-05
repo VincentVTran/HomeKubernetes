@@ -17,10 +17,19 @@ spec:
               name: prometheus-server
               namespace: prometheus
             port: 80
+    # - matchers:
+    #   - prefix: /grafana
+    #   routeAction:
+    #     single:
+    #       upstream:
+    #         name: grafana-grafana-80 # Namespace-Service-Port (only when discovery is enabled)
+    #         namespace: gloo-system
     - matchers:
       - prefix: /grafana
       routeAction:
         single:
-          upstream:
-            name: grafana-grafana-80 # Namespace-Service-Port #
-            namespace: gloo-system
+          kube:
+            ref:
+              name: grafana
+              namespace: grafana
+            port: 80
