@@ -1,35 +1,44 @@
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+--- 
+# web-server-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
-  labels:
-    app: nginx
+  name: test-web-server
+  namespace: test
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: simple-web
   template:
     metadata:
       labels:
-        app: nginx
+        app: simple-web
     spec:
       containers:
-      - name: nginx
-        image: nginx:stable
+      - name: web
+        # Nginx image that responds to HTTP on port 80
+        image: nginx:latest
         ports:
         - containerPort: 80
 
 ---
+# web-server-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
+  name: simple-web-service
+  namespace: test
 spec:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.2.15
-  ports:
-  - port: 80
-    targetPort: 80
   selector:
-    app: nginx
+    app: simple-web
+  type: LoadBalancer            # internal cluster endpoint
+  ports:
+  - protocol: TCP
+    port: 80                # port clients use inside the cluster
+    targetPort: 80          # port the container listens on
