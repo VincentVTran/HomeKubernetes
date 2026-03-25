@@ -1,0 +1,10 @@
+# Default values: https://github.com/ngrok/ngrok-operator/blob/main/helm/ngrok-operator/values.yaml
+#
+# Credentials are NOT stored here — pass them via environment variables in the install/upgrade scripts:
+#   export NGROK_API_KEY=<your-api-key>
+#   export NGROK_AUTHTOKEN=<your-authtoken>
+
+description: "Home lab ngrok tunnel operator"
+
+bindings:
+  enabled: true

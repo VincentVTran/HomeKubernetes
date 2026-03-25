@@ -21,13 +21,22 @@ apt install procps iproute2 net-tools iputils-ping netcat traceroute lsof
 
 ### Process
 #### Log into pod
-`ps aux`
+`ps aux` - a = List of processes for all users, u = user oriented format, x = processes that are not attached to controlling terminal
+
+or 
+`ps aux | grep containerd` 
 
 #### To list open sockets (which ports and process) 
-`lsof -i`
+`lsof -i` - i = IPv4 or IPv6
 
 ### Show all associated files for a process (very useful)
 `lsof -p <PID>`
+
+Note:
+- CWD = Current Working Directory for the process
+- RTD = Root directory for the process
+- TXT = Text segment of the executable
+- MEM = Shared libraries that are loaded into address space (AKA import)
 
 ### Network
 #### Test TCP connectivity
@@ -42,16 +51,10 @@ or
 `nc -vu <pod-ip> <port>` 
 
 ### Memory
-#### To view CPU/memory utilization
-`top`
+#### To view CPU/memory utilization (Top user display)
+`top -p`
 #### To view swap memory (Disk memory used when RAM is full or to free up RAM for more active pages)
 `free -m` or `swapon -s`
-
-Note:
-- CWD = Current Working Directory for the process
-- RTD = Root directory for the process
-- TXT = Text segment of the executable
-- MEM = Shared libraries that are loaded into address space (AKA import)
 
 ## Useful Containerd Commands
 ### To view all containers on a given node

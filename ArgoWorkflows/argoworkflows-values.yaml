@@ -1,0 +1,21 @@
+# Default values: https://github.com/argoproj/argo-helm/blob/main/charts/argo-workflows/values.yaml
+
+server:
+  enabled: true
+  serviceType: LoadBalancer
+  loadBalancerIP: 192.168.2.23
+  # Use server auth mode for home lab (no SSO required)
+  extraArgs:
+    - --auth-mode=server
+
+controller:
+  metricsConfig:
+    enabled: true
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+
+workflow:
+  serviceAccount:
+    create: true

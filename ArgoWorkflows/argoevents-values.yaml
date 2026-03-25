@@ -1,0 +1,10 @@
+# Default values: https://github.com/argoproj/argo-helm/blob/main/charts/argo-events/values.yaml
+
+controller:
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "7777"
+        prometheus.io/path: "/metrics"
