@@ -4,7 +4,104 @@ kind: Namespace
 metadata:
   name: test
 --- 
-# web-server-deployment.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-html
+  namespace: test
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Home Lab</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: 'Segoe UI', system-ui, sans-serif;
+          background: #0f1117;
+          color: #e2e8f0;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+        }
+
+        h1 {
+          font-size: 2rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+          letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+          color: #64748b;
+          margin-bottom: 3rem;
+          font-size: 0.95rem;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 1rem;
+          width: 100%;
+          max-width: 800px;
+        }
+
+        .card {
+          background: #1e2130;
+          border: 1px solid #2d3148;
+          border-radius: 12px;
+          padding: 1.25rem 1.5rem;
+          text-decoration: none;
+          color: inherit;
+          transition: border-color 0.2s, background 0.2s;
+        }
+
+        .card:hover {
+          background: #252840;
+          border-color: #4f5aff;
+        }
+
+        .card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .card .name { font-weight: 600; font-size: 0.95rem; }
+        .card .desc { font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; }
+      </style>
+    </head>
+    <body>
+      <h1>Hiiiiiii Alicia Booooooo!!!!</h1>
+      <p class="subtitle">Internal services dashboard</p>
+
+      <div class="grid">
+        <a class="card" href="/argocd">
+          <div class="icon">⚙️</div>
+          <div class="name">Argo CD</div>
+          <div class="desc">GitOps deployments</div>
+        </a>
+        <a class="card" href="/argo-workflows">
+          <div class="icon">🔄</div>
+          <div class="name">Argo Workflows</div>
+          <div class="desc">Pipeline automation</div>
+        </a>
+        <a class="card" href="/grafana">
+          <div class="icon">📊</div>
+          <div class="name">Grafana</div>
+          <div class="desc">Metrics &amp; dashboards</div>
+        </a>
+        <a class="card" href="/prometheus">
+          <div class="icon">🔥</div>
+          <div class="name">Prometheus</div>
+          <div class="desc">Metrics collection</div>
+        </a>
+      </div>
+    </body>
+    </html>
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,12 +118,17 @@ spec:
         app: simple-web
     spec:
       containers:
-      - name: web
-        # Nginx image that responds to HTTP on port 80
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-
+        - name: web
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          configMap:
+            name: homepage-html
 ---
 # web-server-service.yaml
 apiVersion: v1

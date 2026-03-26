@@ -16,7 +16,20 @@ discovery:
   enabled: false
 
 gatewayProxies:
+  # Internal gateway — accessible only on the home LAN
   gatewayProxy:
     service:
       type: LoadBalancer
       loadBalancerIP: 192.168.2.4
+    gatewaySettings:
+      customHttpGateway:
+        virtualServiceSelector:
+          exposure: internal
+  # External gateway — not exposed on the LAN; ngrok tunnels to it
+  externalGatewayProxy:
+    service:
+      type: ClusterIP
+    gatewaySettings:
+      customHttpGateway:
+        virtualServiceSelector:
+          exposure: external

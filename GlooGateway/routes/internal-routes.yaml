@@ -3,6 +3,8 @@ kind: VirtualService
 metadata:
   name: main-vs
   namespace: gloo-system
+  labels:
+    exposure: internal
 spec:
   virtualHost:
     domains:

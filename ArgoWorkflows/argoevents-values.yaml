@@ -8,3 +8,15 @@ controller:
         prometheus.io/scrape: "true"
         prometheus.io/port: "7777"
         prometheus.io/path: "/metrics"
+
+extraObjects:
+  - apiVersion: argoproj.io/v1alpha1
+    kind: EventBus
+    metadata:
+      name: default
+      namespace: argo
+    spec:
+      nats:
+        native:
+          replicas: 1  # single replica is fine for home lab
+          auth: token

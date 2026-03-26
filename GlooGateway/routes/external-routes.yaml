@@ -1,0 +1,32 @@
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: external-vs
+  namespace: gloo-system
+  labels:
+    exposure: external
+spec:
+  virtualHost:
+    domains:
+      - 'ezequiel-thirstless-johnnie.ngrok-free.dev'
+    routes:
+      - matchers:
+        - exact: /
+        routeAction:
+          single:
+            kube:
+              ref:
+                name: simple-web-service
+                namespace: test
+              port: 80
+      - matchers:
+        - prefix: /webhook/pi-controller-github
+        routeAction:
+          single:
+            kube:
+              ref:
+                name: pi-controller-github-eventsource-svc
+                namespace: argo
+              port: 12000
+        options:
+          prefixRewrite: /  # strip the /webhook/github prefix before forwarding
