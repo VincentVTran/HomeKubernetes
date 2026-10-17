@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgres
+---
+# One Postgres shared by every app. Each app gets its own database and login: see add-app-database.sh.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shared-postgres
+  namespace: postgres
+spec:
+  instances: 1                 # raise to 2 or 3 for a standby that takes over if a node fails
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  storage:
+    size: 10Gi                 # k3s's default local-path storage class
+  enableSuperuserAccess: false
+  # No `managed.roles` here on purpose: add-app-database.sh adds one login per app to the live Cluster, and leaving the field out of
+  # this file keeps `kubectl apply` from removing them. If ArgoCD ever manages this file, tell it to ignore /spec/managed.

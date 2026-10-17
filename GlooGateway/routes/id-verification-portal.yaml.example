@@ -1,0 +1,24 @@
+# Example only, so `kubectl apply -f ./routes` skips it: copy it to a .yaml file to use it. Sends a public https domain to the
+# ID verification portal. Its PUBLIC_BASE_URL must be this same https address, and Bouncr must allow it as an origin. The Service name
+# below assumes the chart was installed as release `id-verification-portal` in namespace `id-verification-portal`.
+apiVersion: gateway.solo.io/v1
+kind: VirtualService
+metadata:
+  name: id-verification-portal
+  namespace: gloo-system
+  labels:
+    exposure: external
+spec:
+  virtualHost:
+    domains:
+      - 'portal.example.com'
+    routes:
+      - matchers:
+        - prefix: /
+        routeAction:
+          single:
+            kube:
+              ref:
+                name: id-verification-portal
+                namespace: id-verification-portal
+              port: 80
