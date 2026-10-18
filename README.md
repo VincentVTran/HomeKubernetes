@@ -33,6 +33,8 @@ Install in this order, then verify (each folder's README has the details):
 ./VictoriaLogsService/install-victoria-logs.sh       # log store: 14 days / 20 GiB cap
 ./VictoriaTracesService/install-victoria-traces.sh   # trace store: 7 days / 10 GiB cap
 ./OtelService/install-otel.sh                        # gateway + agent Collectors
-./OtelService/verify-telemetry.sh                    # sends a log and a span, finds both, prints disk usage vs caps
+./GrafanaService/install-grafana.sh                  # data sources + portal dashboard (create the grafana-admin Secret first)
+./OtelService/verify-telemetry.sh                    # sends a log and a span, finds both in the stores and through Grafana
 ```
 Apps send OTLP to `http://otel-gateway.otel.svc.cluster.local:4318`; every pod's console logs are collected automatically.
+To find a request by the reference code the portal shows, see `GrafanaService/README.md`.
