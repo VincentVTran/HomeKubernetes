@@ -6,7 +6,8 @@ VictoriaLogs, single node, from chart `vm/victoria-logs-single` (version pinned 
 Service `victoria-logs` on port 9428.
 - Written by: Logs from the gateway Collector over OTLP/HTTP: `http://victoria-logs.victoria-logs.svc.cluster.local:9428/insert/opentelemetry/v1/logs`.
 - Read by: Grafana (VictoriaLogs plugin) and LogsQL: `http://victoria-logs.victoria-logs.svc.cluster.local:9428` (`/select/logsql/query`).
-- No external access (no ingress, no LoadBalancer). Use `kubectl port-forward` for the web UI.
+- Web UI on the home network at **http://192.168.2.4/logs** (the internal Gloo route in `../GlooGateway/routes/internal-routes.yaml`).
+  Only the read API (`/select/...`) is routed there, so nothing on the LAN can write or delete logs. No external access (nothing on the ngrok route).
 - Resources: 128–256Mi memory, 50–500m CPU. Metrics (`vl_*`) are scraped by the existing Prometheus.
 
 ### Retention
@@ -33,6 +34,7 @@ months, so keep the `d`.
 Then run `../OtelService/verify-telemetry.sh`. Both scripts take `--kube-context <ctx>` and honour `KUBECONFIG`.
 
 ### Look inside
+Open http://192.168.2.4/logs on the home network, or port-forward:
 ```
 kubectl port-forward --namespace victoria-logs svc/victoria-logs 9428
 ```
