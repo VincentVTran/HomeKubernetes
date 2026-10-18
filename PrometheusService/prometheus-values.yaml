@@ -3,6 +3,8 @@
 # Server configurations
 server:
   enabled: true
+  # Set to 0 to scale Prometheus down, 1 to bring it back
+  replicaCount: 1
   prefixURL: /prometheus
   baseURL: /prometheus
   persistentVolume:
@@ -24,6 +26,30 @@ prometheus-node-exporter:
 
 kube-state-metrics:
   enabled: false
+
+# Chart 29.x adds these default scrape jobs on top of serverFiles below.
+# Disable them all so only our own jobs (serverFiles.prometheus.yml) are used.
+scrapeConfigs:
+  prometheus:
+    enabled: false
+  kubernetes-api-servers:
+    enabled: false
+  kubernetes-nodes:
+    enabled: false
+  kubernetes-nodes-cadvisor:
+    enabled: false
+  kubernetes-service-endpoints:
+    enabled: false
+  kubernetes-service-endpoints-slow:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  kubernetes-services:
+    enabled: false
+  kubernetes-pods:
+    enabled: false
+  kubernetes-pods-slow:
+    enabled: false
 
 # Configure the scrape configs to discover and monitor services in the cluster
 serverFiles:
@@ -86,14 +112,10 @@ serverFiles:
         kubernetes_sd_configs:
           - role: node
         relabel_configs:
+          # Scrape the kubelet directly (node-ip:10250). Chart 29.x no longer
+          # grants nodes/proxy, so the old API-server proxy path returns 403.
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
-          - target_label: __address__
-            replacement: kubernetes.default.svc:443
-          - source_labels: [__meta_kubernetes_node_name]
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/${1}/proxy/metrics
         
       # Job for scraping cAdvisor metrics
       - job_name: kubernetes-nodes-cadvisor
@@ -102,20 +124,15 @@ serverFiles:
         scheme: https  # remove if you want to scrape metrics on insecure port
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
         bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        metrics_path: /metrics/cadvisor
         kubernetes_sd_configs:
           - role: node
         relabel_configs:
+          # Scrape the kubelet directly, same as the kubernetes-nodes job.
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
-          # Only for Kubernetes ^1.7.3.
-          # See: https://github.com/prometheus/prometheus/issues/2916
-          - target_label: __address__
-            replacement: kubernetes.default.svc:443
-          - source_labels: [__meta_kubernetes_node_name]
-            regex: (.+)
-            target_label: __metrics_path__
-            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
         metric_relabel_configs:
           - action: replace
             source_labels: [id]
