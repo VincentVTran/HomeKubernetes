@@ -35,3 +35,22 @@ spec:
               name: grafana
               namespace: grafana
             port: 80
+    # VictoriaLogs' web UI at /logs. Only its read API (/select/...) is routed: VictoriaLogs has no login, so its write
+    # (/insert), delete and admin endpoints stay unreachable from the LAN. The UI works under the prefix because it
+    # calls its API relative to its own address (/logs/select/logsql/query and so on).
+    - matchers:
+      - exact: /logs
+      - exact: /logs/
+      redirectAction:
+        pathRedirect: /logs/select/vmui/
+    - matchers:
+      - prefix: /logs/select/
+      routeAction:
+        single:
+          kube:
+            ref:
+              name: victoria-logs
+              namespace: victoria-logs
+            port: 9428
+      options:
+        prefixRewrite: /select/
