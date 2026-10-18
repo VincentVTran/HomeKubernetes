@@ -1,0 +1,28 @@
+# https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-traces-single/values.yaml
+# Chart 0.1.11 = VictoriaTraces v0.11.0. Only the gateway Collector writes here (OTLP/HTTP on :10428); Grafana reads
+# its Jaeger API at /select/jaeger.
+server:
+  # Service + StatefulSet "victoria-traces" (headless Service, port 10428). No ingress: use `kubectl port-forward`.
+  fullnameOverride: victoria-traces
+
+  # Retention by days AND by disk size: when either is reached, the oldest day is deleted.
+  # A number with no unit means MONTHS, so keep the "d".
+  retentionPeriod: 7d
+  # GiB -> --retention.maxDiskSpaceUsageBytes=10GiB. This is the real limit: local-path does not enforce volume sizes.
+  # The last two days are always kept, even past this cap, hence the volume headroom below.
+  retentionDiskSpaceUsage: 10
+
+  persistentVolume:
+    enabled: true
+    size: 15Gi
+    storageClassName: ""   # "" = the cluster default (local-path)
+
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+  # Disk usage and ingestion metrics (vt_*) in the existing Prometheus.
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10428"
+    prometheus.io/path: /metrics

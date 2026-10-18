@@ -27,3 +27,15 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${CONTROL_PLANE_IP}:6443 K3S_TOKE
 - `make build-image`
 ## To deploy app to cluster
 - `make deploy` to install the metal lb configurations
+
+# Logs and traces (OpenTelemetry)
+Install in this order, then verify (each folder's README has the details):
+```
+./VictoriaLogsService/install-victoria-logs.sh       # log store: 14 days / 20 GiB cap
+./VictoriaTracesService/install-victoria-traces.sh   # trace store: 7 days / 10 GiB cap
+./OtelService/install-otel.sh                        # gateway + agent Collectors
+./GrafanaService/install-grafana.sh                  # data sources + portal dashboard (create the grafana-admin Secret first)
+./OtelService/verify-telemetry.sh                    # sends a log and a span, finds both in the stores and through Grafana
+```
+Apps send OTLP to `http://otel-gateway.otel.svc.cluster.local:4318`; every pod's console logs are collected automatically.
+To find a request by the reference code the portal shows, see `GrafanaService/README.md`.

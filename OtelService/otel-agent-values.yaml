@@ -1,0 +1,131 @@
+# https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-collector/values.yaml
+# Agent Collector (chart 0.175.0, contrib image 0.161.0): a DaemonSet (one per node) that reads every pod's console
+# log from the node and forwards it to the gateway. In daemonset mode the chart names it "otel-agent-agent".
+mode: daemonset
+fullnameOverride: otel-agent
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: "0.161.0"
+
+presets:
+  # Adds the file_log receiver and hostPath mounts for /var/log/pods. Its receiver settings are replaced below.
+  logsCollection:
+    enabled: true
+    # Keeps read offsets in hostPath /var/lib/otelcol, so a restart does not lose lines. It also runs the agent as
+    # root, which it needs anyway: pod log files are root-only (0640).
+    storeCheckpoints: true
+  # k8s_attributes (filtered to this node) and its ClusterRole. Listed in the pipeline below.
+  kubernetesAttributes:
+    enabled: true
+
+useGOMEMLIMIT: true
+resources:
+  requests: { cpu: 50m, memory: 96Mi }
+  limits: { cpu: 300m, memory: 192Mi }
+
+# The agent only tails files: no receiver ports, no Service. Its own metrics are on :8888.
+ports:
+  otlp: { enabled: false }
+  otlp-http: { enabled: false }
+  jaeger-compact: { enabled: false }
+  jaeger-thrift: { enabled: false }
+  jaeger-grpc: { enabled: false }
+  zipkin: { enabled: false }
+  metrics: { enabled: true }
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  prometheus.io/path: /metrics
+
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    prometheus: null
+    otlp: null
+    file_log:
+      include: [/var/log/pods/*/*/*.log]
+      # Skip the telemetry stack's own pods (Collectors, stores and Grafana), so it doesn't log its own logging.
+      # Paths are /var/log/pods/<namespace>_<pod>_<uid>/<container>/<n>.log
+      exclude:
+        - /var/log/pods/otel_*/*/*.log
+        - /var/log/pods/victoria-logs_*/*/*.log
+        - /var/log/pods/victoria-traces_*/*/*.log
+        - /var/log/pods/grafana_*/*/*.log
+      start_at: end
+      include_file_path: true
+      include_file_name: false
+      # Setting operators replaces the preset's list, so the container parser is listed here too.
+      operators:
+        - id: container-parser          # containerd (CRI) format; k3s rotates these files itself
+          type: container
+          max_log_size: 102400
+        # A JSON line (one object per line, like the portal's logger) becomes attributes, and its trace_id, span_id
+        # and severity are lifted into the log record's own fields so logs link to traces.
+        - id: json
+          type: json_parser
+          if: 'body matches "^\\s*\\{"'
+          parse_from: body
+          parse_to: attributes
+          on_error: send_quiet
+        - id: trace
+          type: trace_parser
+          if: 'attributes.trace_id != nil'
+          trace_id: { parse_from: attributes.trace_id }
+          span_id: { parse_from: attributes.span_id }
+          on_error: send_quiet
+        - id: severity
+          type: severity_parser
+          if: 'attributes.severity != nil'
+          parse_from: attributes.severity
+          on_error: send_quiet
+        - id: msg
+          type: move
+          if: 'attributes.message != nil'
+          from: attributes.message
+          to: body
+        - id: drop-trace-id             # now in the record's own field
+          type: remove
+          if: 'attributes.trace_id != nil'
+          field: attributes.trace_id
+        - id: drop-span-id
+          type: remove
+          if: 'attributes.span_id != nil'
+          field: attributes.span_id
+
+  processors:
+    # The preset's k8s_attributes extracts pod metadata; this adds the common pod labels on top (deep-merged), as
+    # resource attributes named k8s.pod.label.<key>.
+    k8s_attributes:
+      extract:
+        labels:
+          - { from: pod, key: app.kubernetes.io/name }
+          - { from: pod, key: app.kubernetes.io/instance }
+          - { from: pod, key: app.kubernetes.io/version }
+          - { from: pod, key: app }
+    memory_limiter:
+      check_interval: 1s
+      limit_percentage: 75
+      spike_limit_percentage: 20
+    resource_detection:
+      detectors: [env]
+    batch: {}
+
+  exporters:
+    debug: null
+    otlp_grpc:
+      endpoint: otel-gateway.otel.svc.cluster.local:4317
+      tls: { insecure: true }
+      sending_queue: { enabled: true, queue_size: 1000 }
+      retry_on_failure: { enabled: true }
+
+  service:
+    pipelines:
+      logs:
+        receivers: [file_log]
+        processors: [memory_limiter, k8s_attributes, resource_detection, batch]
+        exporters: [otlp_grpc]
+      traces: null
+      metrics: null

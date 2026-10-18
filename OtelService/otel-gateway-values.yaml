@@ -1,0 +1,118 @@
+# https://github.com/open-telemetry/opentelemetry-helm-charts/blob/main/charts/opentelemetry-collector/values.yaml
+# Gateway Collector (chart 0.175.0, contrib image 0.161.0): one Deployment that receives OTLP from apps and from the
+# agent, and is the only thing that writes to the stores.
+#   OTLP gRPC: otel-gateway.otel.svc.cluster.local:4317   OTLP HTTP: otel-gateway.otel.svc.cluster.local:4318
+# Contrib 0.161 renamed components (otlp_http, k8s_attributes, resource_detection...); this file uses the new names.
+mode: deployment
+replicaCount: 1
+fullnameOverride: otel-gateway
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  tag: "0.161.0"
+
+# Adds the k8s_attributes processor config and its ClusterRole (pods, namespaces, replicasets, nodes).
+# It is listed in the pipelines below, so the chart does not prepend it.
+presets:
+  kubernetesAttributes:
+    enabled: true
+
+# useGOMEMLIMIT (chart default) sets GOMEMLIMIT to 80% of the memory limit; memory_limiter sits below it at 75%.
+useGOMEMLIMIT: true
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { cpu: 500m, memory: 256Mi }
+
+# Only OTLP in; the chart's Jaeger and Zipkin receivers are removed.
+ports:
+  jaeger-compact: { enabled: false }
+  jaeger-thrift: { enabled: false }
+  jaeger-grpc: { enabled: false }
+  zipkin: { enabled: false }
+  prom-exporter:          # app metrics + the Collector's own metrics, for the existing Prometheus
+    enabled: true
+    containerPort: 8889
+    servicePort: 8889
+    protocol: TCP
+  metrics:                # the Collector's own telemetry (scraped by the `prometheus` receiver below)
+    enabled: true
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8889"
+  prometheus.io/path: /metrics
+
+# Liveness and readiness probes use the health_check extension on :13133 (chart default).
+
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    otlp:
+      protocols:
+        grpc: { endpoint: "${env:MY_POD_IP}:4317" }
+        http: { endpoint: "${env:MY_POD_IP}:4318" }
+    # The chart's default `prometheus` receiver scrapes this Collector's own :8888, so its otelcol_* metrics leave
+    # through the prometheus exporter on :8889 together with the apps' metrics.
+
+  processors:
+    # The preset's k8s_attributes extracts pod metadata; this adds the common pod labels on top (deep-merged), as
+    # resource attributes named k8s.pod.label.<key>.
+    k8s_attributes:
+      extract:
+        labels:
+          - { from: pod, key: app.kubernetes.io/name }
+          - { from: pod, key: app.kubernetes.io/instance }
+          - { from: pod, key: app.kubernetes.io/version }
+          - { from: pod, key: app }
+    memory_limiter:
+      check_interval: 1s
+      limit_percentage: 75
+      spike_limit_percentage: 20
+    resource_detection:
+      detectors: [env]
+      override: false
+    batch:
+      send_batch_size: 1024
+      timeout: 5s
+    # Second line of defence behind the apps' own rules: delete span and log attributes that can carry secrets.
+    attributes/redact:
+      actions:
+        - { pattern: "(?i).*(authorization|cookie).*", action: delete }   # also catches set-cookie and header forms
+        - { key: url.query, action: delete }
+        - { key: url.full, action: delete }
+        - { key: http.url, action: delete }
+        - { key: http.target, action: delete }
+
+  exporters:
+    debug: null
+    otlp_http/logs:
+      logs_endpoint: http://victoria-logs.victoria-logs.svc.cluster.local:9428/insert/opentelemetry/v1/logs
+      # Without this, VictoriaLogs makes every resource attribute a stream field (pod uid, start time...).
+      headers:
+        VL-Stream-Fields: k8s.namespace.name,k8s.container.name,service.name
+      # Bounded in-memory queue: a short store outage loses nothing, a long one cannot use up memory.
+      sending_queue: { enabled: true, queue_size: 1000 }
+      retry_on_failure: { enabled: true, initial_interval: 5s, max_interval: 30s, max_elapsed_time: 300s }
+    otlp_http/traces:
+      traces_endpoint: http://victoria-traces.victoria-traces.svc.cluster.local:10428/insert/opentelemetry/v1/traces
+      sending_queue: { enabled: true, queue_size: 1000 }
+      retry_on_failure: { enabled: true, initial_interval: 5s, max_interval: 30s, max_elapsed_time: 300s }
+    prometheus:
+      endpoint: "${env:MY_POD_IP}:8889"
+      resource_to_telemetry_conversion: { enabled: false }
+
+  service:
+    pipelines:
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, k8s_attributes, resource_detection, attributes/redact, batch]
+        exporters: [otlp_http/logs]
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, k8s_attributes, resource_detection, attributes/redact, batch]
+        exporters: [otlp_http/traces]
+      metrics:
+        receivers: [otlp, prometheus]
+        processors: [memory_limiter, k8s_attributes, resource_detection, batch]
+        exporters: [prometheus]
