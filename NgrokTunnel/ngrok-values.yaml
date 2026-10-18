@@ -6,5 +6,19 @@
 
 description: "Home lab ngrok tunnel operator"
 
+# Keep domains in ngrok when their Domain resource is deleted. The free
+# *.ngrok-free.dev domain is managed by ngrok and shared by every tunnel here,
+# so deleting one Domain resource must not try to delete it upstream.
+defaultDomainReclaimPolicy: Retain
+
+agent:
+  # The agent leaks memory while it retries a tunnel that never becomes Ready
+  # (seen at 1.6Gi after 30 days). The limit makes Kubernetes restart it early.
+  resources:
+    requests:
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
 bindings:
   enabled: true
