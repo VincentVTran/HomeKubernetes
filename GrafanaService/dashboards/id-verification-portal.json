@@ -339,6 +339,186 @@
           }
         ]
       }
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Recent logs",
+      "description": "The latest log lines from the portal's pods at every level except debug: one line per request (method, route, status), plus anything else the server writes. Lines the server wrote outside its logger (for example Node's warnings, or a crash's stack trace) show as Unspecified. Click a reference code to open the request's trace.",
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "victorialogs"
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "victorialogs"
+          },
+          "editorMode": "code",
+          "queryType": "instant",
+          "expr": "k8s.namespace.name:=\"$namespace\" -severity_text:=\"debug\" | extract_regexp \"^(?P<reference>[0-9a-f]{8})\" from trace_id | sort by (_time desc) | limit 200 | fields _time, severity_text, reference, _msg, trace_id",
+          "maxLines": 200
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "format": "json",
+            "jsonPaths": [
+              {
+                "path": "reference"
+              },
+              {
+                "path": "severity_text"
+              }
+            ],
+            "replace": false,
+            "keepTime": false
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "labels": true,
+              "id": true,
+              "streams": true,
+              "streamId": true,
+              "detected_level": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "severity_text": 1,
+              "reference": 2,
+              "Line": 3,
+              "trace_id": 4
+            },
+            "renameByName": {
+              "Time": "Time",
+              "severity_text": "Level",
+              "Line": "Message",
+              "reference": "Reference"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "reference"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "View trace",
+                    "url": "",
+                    "internal": {
+                      "datasourceUid": "victoriatraces",
+                      "datasourceName": "VictoriaTraces",
+                      "query": {
+                        "query": "${__data.fields.trace_id}"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "severity_text"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "info": {
+                        "color": "text",
+                        "index": 0
+                      },
+                      "warn": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "error": {
+                        "color": "red",
+                        "index": 2
+                      },
+                      "Unspecified": {
+                        "color": "purple",
+                        "index": 3
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Time",
+            "desc": true
+          }
+        ]
+      }
     }
   ]
 }
