@@ -1,4 +1,23 @@
-# https://github.com/grafana/helm-charts/blob/main/charts/grafana/values.yaml
+# https://github.com/grafana/helm-charts/blob/grafana-10.0.0/charts/grafana/values.yaml (chart pinned in the scripts)
+
+# 12.2 or newer is needed for trace-to-logs links into VictoriaLogs; chart 10.0.0 ships 12.1.1.
+image:
+  tag: "12.4.12"
+
+# Admin login from a Secret made by hand (see README.md); nothing secret is in this repository.
+admin:
+  existingSecret: grafana-admin
+  userKey: admin-user
+  passwordKey: admin-password
+
+# Official VictoriaLogs data source plugin (signed), downloaded at startup.
+plugins:
+  - victoriametrics-logs-datasource 0.32.0
+
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { cpu: 500m, memory: 384Mi }
+
 service:
   type: "LoadBalancer"
   loadBalancerIP: 192.168.2.21
@@ -8,6 +27,7 @@ sidecar:
   datasources:
     enabled: true           # :contentReference[oaicite:4]{index=4}
 
+# Home network only: the LAN IP above and the internal gateway route. Nothing on the external (ngrok) route.
 # Configure server root URL for dynamic subpath handling
 grafana.ini:
   server:
@@ -18,7 +38,7 @@ grafana.ini:
 initChownData:
   enabled: false
 
-# Inline provisioning of datasources
+# Inline provisioning of datasources. Grafana expands $VAR in these files, so links write `$$` for a literal `$`.
 datasources:
   datasources.yaml:
     apiVersion: 1
@@ -30,6 +50,35 @@ datasources:
         isDefault: true
         jsonData:
           timeInterval: "15s"
+      # Logs (../VictoriaLogsService). A log line's trace_id links to its trace.
+      - name: VictoriaLogs
+        uid: victorialogs
+        type: victoriametrics-logs-datasource
+        access: proxy
+        url: http://victoria-logs.victoria-logs.svc.cluster.local:9428
+        jsonData:
+          derivedFields:
+            - name: trace_id
+              matcherType: label
+              matcherRegex: trace_id
+              url: '$${__value.raw}'
+              urlDisplayLabel: View trace
+              datasourceUid: victoriatraces
+      # Traces (../VictoriaTracesService) through its Jaeger query API. A span links to its log lines.
+      - name: VictoriaTraces
+        uid: victoriatraces
+        type: jaeger
+        access: proxy
+        url: http://victoria-traces.victoria-traces.svc.cluster.local:10428/select/jaeger
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: victorialogs
+            spanStartTimeShift: -5m
+            spanEndTimeShift: 5m
+            filterByTraceID: true
+            filterBySpanID: false
+            customQuery: true
+            query: 'trace_id:="$${__trace.traceId}"'
 
 persistence:
   type: pvc
@@ -67,6 +116,17 @@ dashboardProviders:
         allowUiUpdates: true
         options:
           path: /var/lib/grafana/dashboards/default
+      # Dashboards kept in this repository (dashboards/*.json); the install and upgrade scripts pass each file with
+      # --set-file. Edit the file, not the dashboard in Grafana.
+      - name: portal
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: true
+        editable: false
+        allowUiUpdates: false
+        options:
+          path: /var/lib/grafana/dashboards/portal
 
 # Supply dashboards by Grafana.com ID
 dashboards:

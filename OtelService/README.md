@@ -26,7 +26,7 @@ Two OpenTelemetry Collectors from chart `open-telemetry/opentelemetry-collector`
 Install the stores first (`../VictoriaLogsService`, `../VictoriaTracesService`), then:
 ```
 ./install-otel.sh
-./verify-telemetry.sh
+./verify-telemetry.sh --skip-grafana   # or without the flag once ../GrafanaService is installed
 ```
 The old single `otel-collector` release (whose logs pipeline sent logs back into itself) is replaced by these two. If
 it is installed, remove it first: `helm uninstall otel-collector --namespace otel`.
@@ -42,15 +42,14 @@ Edit the values (or bump `VERSION` in both scripts), then:
 `./verify-telemetry.sh` sends a log and a span with a fresh trace-id to the gateway from a short-lived curl pod (the
 receivers bind the pod IP, so port-forwarding to the Collector doesn't work), waits until both are in the stores,
 checks that the secret-bearing attributes it sent were redacted, and prints each store's disk usage against its caps.
-It exits non-zero on any failure. Run it after every install or upgrade.
+It then checks Grafana through its API (port-forward, admin login from the `grafana-admin` Secret): both data sources
+are healthy and linked to each other, the ID verification portal dashboard is provisioned, and the log it just sent is
+found through Grafana by its reference code. Pass `--skip-grafana` before Grafana is installed. It exits non-zero on
+any failure. Run it after every install or upgrade.
 
 Every script here and in the store folders takes `--kube-context <ctx>` and honours `KUBECONFIG`, so they can be tried on
 a throwaway cluster first, e.g. `kind create cluster --name obs --kubeconfig /tmp/kc` then `KUBECONFIG=/tmp/kc ./install-otel.sh`.
 
 ### Find a request by reference code
-The portal shows a reference code: the first 8 hex characters of the request's trace-id. In Grafana's VictoriaLogs
-data source (or the VictoriaLogs UI, see `../VictoriaLogsService`) search
-```
-trace_id:abcd1234*
-```
-and follow the trace-id link to the trace. With the full trace-id: `trace_id:="<32 hex>"`.
+See `../GrafanaService/README.md` ("Finding a request by reference code"). In short: in Grafana's VictoriaLogs data
+source search `trace_id:abcd1234*` (the code the portal showed) and follow the trace-id link to the trace.
