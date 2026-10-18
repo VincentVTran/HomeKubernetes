@@ -2,7 +2,7 @@
 https://docs.victoriametrics.com/victoriatraces/ and the chart: https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-traces-single
 
 ### What runs here (namespace `victoria-traces`)
-VictoriaTraces, single node, from chart `vm/victoria-traces-single` (version pinned in the scripts), as StatefulSet and headless
+VictoriaTraces, single node, from chart `vm/victoria-traces-single` (version pinned in `chart-version`, read by both scripts), as StatefulSet and headless
 Service `victoria-traces` on port 10428.
 - Written by: Traces from the gateway Collector over OTLP/HTTP: `http://victoria-traces.victoria-traces.svc.cluster.local:10428/insert/opentelemetry/v1/traces`.
 - Read by: Grafana (Jaeger data source): `http://victoria-traces.victoria-traces.svc.cluster.local:10428/select/jaeger`.

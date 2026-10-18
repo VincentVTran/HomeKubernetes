@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 HELM=(helm); KUBECTL=(kubectl)
 [[ "${1:-}" == --kube-context ]] && { HELM+=(--kube-context "$2"); KUBECTL+=(--context "$2"); }
-VERSION=10.0.0
+VERSION=$(<chart-version)   # the pinned chart version, shared with the other script in this folder
 
 if ! "${KUBECTL[@]}" get secret grafana-admin --namespace grafana >/dev/null 2>&1; then
   echo "Create the admin Secret first (see README.md), e.g.:" >&2

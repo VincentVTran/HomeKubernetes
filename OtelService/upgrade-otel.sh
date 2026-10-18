@@ -1,10 +1,10 @@
 #!/bin/bash
-# Applies changes to the values files (or a new pinned VERSION) to both Collectors. Run ./verify-telemetry.sh after.
+# Applies changes to the values files (or a new chart version in ./chart-version) to both Collectors. Run ./verify-telemetry.sh after.
 # Pass --kube-context <ctx> to target another cluster; KUBECONFIG is honoured as usual.
 set -euo pipefail
 cd "$(dirname "$0")"
 HELM=(helm); [[ "${1:-}" == --kube-context ]] && HELM+=(--kube-context "$2")
-VERSION=0.175.0
+VERSION=$(<chart-version)   # the pinned chart version, shared with the other script in this folder
 
 helm repo update open-telemetry
 

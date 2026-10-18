@@ -4,12 +4,13 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 HELM=(helm); [[ "${1:-}" == --kube-context ]] && HELM+=(--kube-context "$2")
+VERSION=$(<chart-version)   # the pinned chart version, shared with the other script in this folder
 
 helm repo add vm https://victoriametrics.github.io/helm-charts
 helm repo update vm
 
 "${HELM[@]}" install victoria-logs vm/victoria-logs-single \
-    --version 0.13.10 \
+    --version "$VERSION" \
     --namespace victoria-logs \
     --create-namespace \
     --values ./victoria-logs-values.yaml

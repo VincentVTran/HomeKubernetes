@@ -2,7 +2,7 @@
 https://docs.victoriametrics.com/victorialogs/ and the chart: https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-logs-single
 
 ### What runs here (namespace `victoria-logs`)
-VictoriaLogs, single node, from chart `vm/victoria-logs-single` (version pinned in the scripts), as StatefulSet and headless
+VictoriaLogs, single node, from chart `vm/victoria-logs-single` (version pinned in `chart-version`, read by both scripts), as StatefulSet and headless
 Service `victoria-logs` on port 9428.
 - Written by: Logs from the gateway Collector over OTLP/HTTP: `http://victoria-logs.victoria-logs.svc.cluster.local:9428/insert/opentelemetry/v1/logs`.
 - Read by: Grafana (VictoriaLogs plugin) and LogsQL: `http://victoria-logs.victoria-logs.svc.cluster.local:9428` (`/select/logsql/query`).

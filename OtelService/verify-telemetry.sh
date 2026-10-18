@@ -4,6 +4,8 @@
 #   2. waits until the log is in VictoriaLogs and the span is in VictoriaTraces (fails after a timeout);
 #   3. checks the gateway's redaction removed the secret-bearing attributes that were sent on purpose;
 #   4. prints each store's disk usage against its caps;
+#   (first of all it prints the kubectl context it acts on, and each node's container log rotation from the kubelet's
+#   configz: containerLogMaxSize and containerLogMaxFiles, which bound the pod log files the agent reads);
 #   5. checks Grafana through its API (port-forward, admin login from the `grafana-admin` Secret): both data sources
 #      are healthy and linked to each other, the "ID verification portal" dashboard is provisioned, and the log just
 #      sent is found through Grafana by its reference code (`trace_id:<first 8 hex>*`). Skip with --skip-grafana.
@@ -17,12 +19,30 @@ set -euo pipefail
 
 KUBECTL=(kubectl)
 CHECK_GRAFANA=1
+CONTEXT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --kube-context) KUBECTL+=(--context "$2"); shift 2 ;;
+    --kube-context) KUBECTL+=(--context "$2"); CONTEXT=$2; shift 2 ;;
     --skip-grafana) CHECK_GRAFANA=""; shift ;;
     *) echo "usage: verify-telemetry.sh [--kube-context <ctx>] [--skip-grafana]" >&2; exit 2 ;;
   esac
+done
+
+# Say which cluster this is about to touch before touching it.
+CONTEXT=${CONTEXT:-$(kubectl config current-context 2>/dev/null || true)}
+echo "kubectl context: ${CONTEXT:-<none>} (kubeconfig: ${KUBECONFIG:-~/.kube/config})"
+
+# Container log rotation on each node: the kubelet rotates pod log files at containerLogMaxSize and keeps
+# containerLogMaxFiles of them, which is what keeps the files the agent tails from filling the node's disk.
+NODES=$("${KUBECTL[@]}" get nodes -o 'jsonpath={.items[*].metadata.name}') || { echo "FAIL: could not list nodes" >&2; exit 1; }
+for node in $NODES; do
+  configz=$("${KUBECTL[@]}" get --raw "/api/v1/nodes/$node/proxy/configz" 2>/dev/null) \
+    || { echo "FAIL: could not read the kubelet configz of node $node" >&2; exit 1; }
+  max_size=$(grep -o '"containerLogMaxSize":"[^"]*"' <<<"$configz" | cut -d'"' -f4)
+  max_files=$(grep -o '"containerLogMaxFiles":[0-9]*' <<<"$configz" | cut -d: -f2)
+  [[ -n "$max_size" && -n "$max_files" ]] \
+    || { echo "FAIL: node $node's kubelet configz has no containerLogMaxSize/containerLogMaxFiles" >&2; exit 1; }
+  echo "node $node: container logs rotate at $max_size, $max_files files kept"
 done
 
 TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-90}

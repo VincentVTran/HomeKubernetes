@@ -1,11 +1,11 @@
 #!/bin/bash
-# Applies changes to grafana-values.yaml and ./dashboards (or a new pinned VERSION). Run
+# Applies changes to grafana-values.yaml and ./dashboards (or a new chart version in ./chart-version). Run
 # ../OtelService/verify-telemetry.sh after.
 # Pass --kube-context <ctx> to target another cluster; KUBECONFIG is honoured as usual.
 set -euo pipefail
 cd "$(dirname "$0")"
 HELM=(helm); [[ "${1:-}" == --kube-context ]] && HELM+=(--kube-context "$2")
-VERSION=10.0.0
+VERSION=$(<chart-version)   # the pinned chart version, shared with the other script in this folder
 
 helm repo update grafana
 

@@ -47,12 +47,13 @@ config:
     otlp: null
     file_log:
       include: [/var/log/pods/*/*/*.log]
-      # Skip the telemetry stack's own pods, so it doesn't log its own logging.
+      # Skip the telemetry stack's own pods (Collectors, stores and Grafana), so it doesn't log its own logging.
       # Paths are /var/log/pods/<namespace>_<pod>_<uid>/<container>/<n>.log
       exclude:
         - /var/log/pods/otel_*/*/*.log
         - /var/log/pods/victoria-logs_*/*/*.log
         - /var/log/pods/victoria-traces_*/*/*.log
+        - /var/log/pods/grafana_*/*/*.log
       start_at: end
       include_file_path: true
       include_file_name: false
@@ -95,6 +96,15 @@ config:
           field: attributes.span_id
 
   processors:
+    # The preset's k8s_attributes extracts pod metadata; this adds the common pod labels on top (deep-merged), as
+    # resource attributes named k8s.pod.label.<key>.
+    k8s_attributes:
+      extract:
+        labels:
+          - { from: pod, key: app.kubernetes.io/name }
+          - { from: pod, key: app.kubernetes.io/instance }
+          - { from: pod, key: app.kubernetes.io/version }
+          - { from: pod, key: app }
     memory_limiter:
       check_interval: 1s
       limit_percentage: 75

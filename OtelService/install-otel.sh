@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 HELM=(helm); [[ "${1:-}" == --kube-context ]] && HELM+=(--kube-context "$2")
-VERSION=0.175.0
+VERSION=$(<chart-version)   # the pinned chart version, shared with the other script in this folder
 
 helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
 helm repo update open-telemetry

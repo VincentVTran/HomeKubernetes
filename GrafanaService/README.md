@@ -2,7 +2,7 @@
 https://grafana.com/docs/grafana/latest/ and the chart: https://github.com/grafana/helm-charts/tree/grafana-10.0.0/charts/grafana
 
 ### What runs here (namespace `grafana`)
-Grafana from chart `grafana/grafana` 10.0.0 (pinned in the scripts), image 12.4.12. Trace-to-logs links into
+Grafana from chart `grafana/grafana` 10.0.0 (pinned in `chart-version`), image 12.4.12. Trace-to-logs links into
 VictoriaLogs need Grafana 12.2 or newer, and the chart's default image is 12.1.1, so `grafana-values.yaml` pins the tag.
 
 - Home network only: the LoadBalancer IP `192.168.2.21` and the internal gateway route (`/grafana`). Nothing is on the
@@ -57,7 +57,7 @@ create the Secret above, then:
 ```
 
 ### Upgrade
-Edit `grafana-values.yaml` or `dashboards/*.json` (or bump `VERSION` in both scripts), then:
+Edit `grafana-values.yaml` or `dashboards/*.json` (or change the chart version in `chart-version`), then:
 ```
 ./upgrade-grafana.sh
 ../OtelService/verify-telemetry.sh

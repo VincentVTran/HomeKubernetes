@@ -56,6 +56,15 @@ config:
     # through the prometheus exporter on :8889 together with the apps' metrics.
 
   processors:
+    # The preset's k8s_attributes extracts pod metadata; this adds the common pod labels on top (deep-merged), as
+    # resource attributes named k8s.pod.label.<key>.
+    k8s_attributes:
+      extract:
+        labels:
+          - { from: pod, key: app.kubernetes.io/name }
+          - { from: pod, key: app.kubernetes.io/instance }
+          - { from: pod, key: app.kubernetes.io/version }
+          - { from: pod, key: app }
     memory_limiter:
       check_interval: 1s
       limit_percentage: 75
