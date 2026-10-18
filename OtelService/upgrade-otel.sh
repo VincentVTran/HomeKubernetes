@@ -10,10 +10,12 @@ helm repo update open-telemetry
 
 "${HELM[@]}" upgrade otel-gateway open-telemetry/opentelemetry-collector \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace otel \
     --values ./otel-gateway-values.yaml
 
 "${HELM[@]}" upgrade otel-agent open-telemetry/opentelemetry-collector \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace otel \
     --values ./otel-agent-values.yaml

@@ -11,6 +11,7 @@ helm repo update vm
 
 "${HELM[@]}" install victoria-logs vm/victoria-logs-single \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace victoria-logs \
     --create-namespace \
     --values ./victoria-logs-values.yaml

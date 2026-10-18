@@ -10,5 +10,6 @@ helm repo update vm
 
 "${HELM[@]}" upgrade victoria-traces vm/victoria-traces-single \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace victoria-traces \
     --values ./victoria-traces-values.yaml

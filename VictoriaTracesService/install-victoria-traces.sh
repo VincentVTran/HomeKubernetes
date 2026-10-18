@@ -11,6 +11,7 @@ helm repo update vm
 
 "${HELM[@]}" install victoria-traces vm/victoria-traces-single \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace victoria-traces \
     --create-namespace \
     --values ./victoria-traces-values.yaml

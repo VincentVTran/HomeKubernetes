@@ -11,6 +11,7 @@ helm repo update grafana
 
 "${HELM[@]}" upgrade grafana grafana/grafana \
   --version "$VERSION" \
+    --wait --timeout 5m \
   --namespace grafana \
   --values ./grafana-values.yaml \
   --set-file dashboards.portal.id-verification-portal.json=./dashboards/id-verification-portal.json
