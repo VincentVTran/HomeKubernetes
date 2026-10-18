@@ -25,6 +25,10 @@ VictoriaLogs need Grafana 12.2 or newer, and the chart's default image is 12.1.1
   - **Recent errors**: the latest log lines with severity error or worse from the namespace in the dashboard's
     *Namespace (logs)* box (default `id-verification-portal`), with their reference code. Click the reference code or
     the trace-id to open the trace.
+  - **Recent logs**: the latest 200 lines from the same namespace at every level except debug, with a colour-coded
+    level (info, warn, error, and Unspecified for anything written outside the server's logger, such as Node's warnings
+    or a crash's stack trace). The portal writes one line per request (`GET /api/applicants 200`), so this shows what
+    it has been doing. The Level column is filterable; the reference code opens the trace.
 
   The dashboard is read-only in Grafana. Edit the JSON file and run `./upgrade-grafana.sh`; the scripts pass it to the
   chart with `--set-file`.
