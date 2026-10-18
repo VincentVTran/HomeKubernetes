@@ -11,6 +11,14 @@ server:
     enabled: true
     size: 2Gi
   retention: 1d
+  # It had no request or limit, so it ran as BestEffort: first to be killed when the node runs short, and free to grow. About 150-250Mi
+  # with the series trimmed below; the limit leaves room for a burst (e.g. compaction).
+  resources:
+    requests:
+      cpu: 50m
+      memory: 384Mi
+    limits:
+      memory: 1Gi
   # service:
   #   type: LoadBalancer
   #   loadBalancerIP: 192.168.2.3
@@ -87,6 +95,11 @@ serverFiles:
           - source_labels: [__meta_kubernetes_pod_container_name]
             action: replace
             target_label: container_name
+        metric_relabel_configs:
+          # Gloo's Envoy proxies export ~6k histogram buckets per scrape that no dashboard reads; their _count and _sum stay.
+          - source_labels: [__name__]
+            action: drop
+            regex: envoy_.*_bucket
           
       # Job for scraping Kubernetes API server
       - job_name: 'kubernetes-apiservers'
@@ -101,6 +114,12 @@ serverFiles:
           - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
             action: keep
             regex: default;kubernetes;https
+        metric_relabel_configs:
+          # ~50k of this job's ~63k series are latency and size histogram buckets no dashboard reads. Their _count and _sum stay, so
+          # request rates and average latencies still work. Remove a name here to get its buckets back (e.g. for p99 latency).
+          - source_labels: [__name__]
+            action: drop
+            regex: (apiserver_request_duration_seconds|apiserver_request_sli_duration_seconds|apiserver_request_body_size_bytes|apiserver_response_sizes|apiserver_watch_cache_read_wait_seconds|apiserver_watch_events_sizes|etcd_request_duration_seconds|apiserver_flowcontrol_.*|workqueue_.*_seconds|apiserver_storage_.*_seconds|apiserver_admission_.*_seconds|rest_client_.*_seconds|apiserver_webhooks_.*_seconds|apiserver_watch_list_duration_seconds|apiserver_crd_conversion_webhook_duration_seconds|authentication_duration_seconds|apiserver_delegated_.*_seconds|apiserver_cache_list_.*|apiserver_selfrequest_.*)_bucket
       
       # Job for scraping Kubernetes nodes (kubelet)
       - job_name: 'kubernetes-nodes'
@@ -116,6 +135,12 @@ serverFiles:
           # grants nodes/proxy, so the old API-server proxy path returns 403.
           - action: labelmap
             regex: __meta_kubernetes_node_label_(.+)
+        metric_relabel_configs:
+          # On k3s the kubelet, API server and etcd are one process with one metrics registry, so the kubelet's /metrics returns the
+          # whole kubernetes-apiservers job again (~63k identical series). Keep only the kubelet's own metrics.
+          - source_labels: [__name__]
+            action: keep
+            regex: kubelet_.*|prober_.*|volume_manager_.*|storage_operation_.*|process_.*|go_.*|up
         
       # Job for scraping cAdvisor metrics
       - job_name: kubernetes-nodes-cadvisor
