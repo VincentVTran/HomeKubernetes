@@ -1,0 +1,27 @@
+# https://github.com/VictoriaMetrics/helm-charts/blob/master/charts/victoria-logs-single/values.yaml
+# Chart 0.13.10 = VictoriaLogs v1.53.0. Only the gateway Collector writes here (OTLP/HTTP on :9428); Grafana reads it.
+server:
+  # Service + StatefulSet "victoria-logs" (headless Service, port 9428). No ingress: use `kubectl port-forward`.
+  fullnameOverride: victoria-logs
+
+  # Retention by days AND by disk size: when either is reached, the oldest day is deleted.
+  # A number with no unit means MONTHS, so keep the "d".
+  retentionPeriod: 14d
+  # GiB -> --retention.maxDiskSpaceUsageBytes=20GiB. This is the real limit: local-path does not enforce volume sizes.
+  # The last two days are always kept, even past this cap, hence the volume headroom below.
+  retentionDiskSpaceUsage: 20
+
+  persistentVolume:
+    enabled: true
+    size: 25Gi
+    storageClassName: ""   # "" = the cluster default (local-path)
+
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 256Mi }
+
+  # Disk usage and ingestion metrics (vl_*) in the existing Prometheus.
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9428"
+    prometheus.io/path: /metrics

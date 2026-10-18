@@ -72,7 +72,7 @@ usage() {  # usage <name> <url> <metric prefix>
     /^flag\{/ && /name="retention.maxDiskSpaceUsageBytes"/ { match($0, /value="[^"]*"/); cap = substr($0, RSTART+7, RLENGTH-8) }
     END {
       if (used == "") { print "FAIL: no disk metrics from " name; exit 1 }
-      printf "%-15s used %.1f MiB of %s cap (retention %s), %.1f GiB free on the volume\n", name, used/1048576, cap, days, free/1073741824
+      printf "%-15s used %.2f MiB of %s cap (retention %s), %.1f GiB free on the volume\n", name, used/1048576, cap, days, free/1073741824
     }' || exit 1
 }
 usage VictoriaLogs "$LOGS" vl || fail "could not read VictoriaLogs metrics"
