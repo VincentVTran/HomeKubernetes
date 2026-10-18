@@ -10,5 +10,6 @@ helm repo update vm
 
 "${HELM[@]}" upgrade victoria-logs vm/victoria-logs-single \
     --version "$VERSION" \
+    --wait --timeout 5m \
     --namespace victoria-logs \
     --values ./victoria-logs-values.yaml

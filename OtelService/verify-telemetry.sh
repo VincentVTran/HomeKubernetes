@@ -45,6 +45,15 @@ for node in $NODES; do
   echo "node $node: container logs rotate at $max_size, $max_files files kept"
 done
 
+# Wait for the gateway and the stores to be ready, so a check run straight after an install doesn't test pods that are
+# still pulling their images.
+for workload in otel/deployment/otel-gateway victoria-logs/statefulset/victoria-logs victoria-traces/statefulset/victoria-traces; do
+  IFS=/ read -r ns kind name <<<"$workload"
+  "${KUBECTL[@]}" rollout status "$kind/$name" --namespace "$ns" --timeout=180s >/dev/null \
+    || { echo "FAIL: $kind/$name in $ns is not ready after 3 minutes" >&2; exit 1; }
+done
+echo "the gateway and both stores are ready"
+
 TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-90}
 GATEWAY=http://otel-gateway.otel.svc.cluster.local:4318
 LOGS=http://victoria-logs.victoria-logs.svc.cluster.local:9428
