@@ -11,22 +11,11 @@ spec:
       - 'ezequiel-thirstless-johnnie.ngrok-free.dev'
     routes:
       - matchers:
-        - exact: /
+        - prefix: /
         routeAction:
           single:
             kube:
               ref:
-                name: simple-web-service
-                namespace: test
+                name: id-verification-portal
+                namespace: id-verification-portal
               port: 80
-      - matchers:
-        - prefix: /webhook/pi-controller-github
-        routeAction:
-          single:
-            kube:
-              ref:
-                name: pi-controller-github-eventsource-svc
-                namespace: argo
-              port: 12000
-        options:
-          prefixRewrite: /  # strip the /webhook/github prefix before forwarding
