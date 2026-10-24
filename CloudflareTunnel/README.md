@@ -70,7 +70,7 @@ its DNS is on Cloudflare already. The portal is at `rental.vtranlabs.com`; other
    cloudflared tunnel login                 # browser: pick vtranlabs.com; writes ~/.cloudflared/cert.pem (keep it on the laptop)
    cloudflared tunnel create home           # writes ~/.cloudflared/<tunnel-id>.json: the tunnel's credentials
    ```
-3. Add `CLOUDFLARE_TUNNEL_CREDENTIALS=~/.cloudflared/<tunnel-id>.json` to `../.env`.
+3. Add `CLOUDFLARE_TUNNEL_CREDENTIALS=~/.cloudflared/<tunnel-id>.json` to `../.env` (start from `../.env.example`).
 4. `kubectl apply -f ../GlooGateway/routes/external-routes.yaml`, then `./install-cloudflared.sh`.
 5. `cloudflared tunnel route dns home rental.vtranlabs.com`. This makes the proxied CNAME `rental` → `<tunnel-id>.cfargotunnel.com`.
 6. `./verify-tunnel.sh`. If it fails on `TRUST_PROXY`, set the portal chart's `trustProxy` to the value it names and deploy.
