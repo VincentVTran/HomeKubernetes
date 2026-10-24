@@ -5,8 +5,7 @@
 #   2. https://<host>/api/health answers {"ok":true} over a valid certificate, through Cloudflare, and /admin serves the web app;
 #   3. a hostname the tunnel doesn't know never reaches the portal;
 #   4. the internal-only paths (/grafana, /prometheus, /logs) are not served on the public address;
-#   5. with --ngrok-host, the ngrok address still answers too (while both tunnels run; see README.md);
-#   6. the caller's address: which X-Forwarded-For chain reaches the portal, and so which TRUST_PROXY (chart `trustProxy`)
+#   5. the caller's address: which X-Forwarded-For chain reaches the portal, and so which TRUST_PROXY (chart `trustProxy`)
 #      picks out the caller. Fails if the portal's current value picks someone else, or if a caller can choose the address
 #      by sending their own X-Forwarded-For. For this it adds, for a few seconds,
 #      a route on a random path of the external VirtualService to a `whoami` echo pod in a throwaway namespace (verify-tunnel-<random>), and removes
@@ -14,7 +13,6 @@
 #
 #   ./verify-tunnel.sh                                  # host from tunnel-config.yaml, current kubectl context
 #   ./verify-tunnel.sh --host portal.example.com
-#   ./verify-tunnel.sh --ngrok-host <name>.ngrok-free.dev
 #   ./verify-tunnel.sh --kube-context <ctx> --skip-caller-address
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -22,15 +20,13 @@ cd "$(dirname "$0")"
 KUBECTL=(kubectl)
 CONTEXT=""
 HOST=""
-NGROK_HOST=""
 CHECK_CALLER=1
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --kube-context) KUBECTL+=(--context "$2"); CONTEXT=$2; shift 2 ;;
     --host) HOST=$2; shift 2 ;;
-    --ngrok-host) NGROK_HOST=$2; shift 2 ;;
     --skip-caller-address) CHECK_CALLER=""; shift ;;
-    *) echo "usage: verify-tunnel.sh [--host <hostname>] [--ngrok-host <hostname>] [--kube-context <ctx>] [--skip-caller-address]" >&2; exit 2 ;;
+    *) echo "usage: verify-tunnel.sh [--host <hostname>] [--kube-context <ctx>] [--skip-caller-address]" >&2; exit 2 ;;
   esac
 done
 fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -40,7 +36,7 @@ CONTEXT=${CONTEXT:-$(kubectl config current-context 2>/dev/null || true)}
 echo "kubectl context: ${CONTEXT:-<none>} (kubeconfig: ${KUBECONFIG:-~/.kube/config})"
 HOST=${HOST:-$(sed -n 's/^[[:space:]]*-[[:space:]]*hostname:[[:space:]]*\([^[:space:]#]*\).*/\1/p' tunnel-config.yaml | head -1)}
 [[ -n "$HOST" && "$HOST" != example.com && "$HOST" != *.example.com ]] || fail "no portal hostname: pass --host, or set it in tunnel-config.yaml"
-echo "portal hostname: $HOST${NGROK_HOST:+, ngrok hostname: $NGROK_HOST}"
+echo "portal hostname: $HOST"
 rand() { od -An -tx1 -N4 /dev/urandom | tr -d ' \n'; }
 
 # --- 1. cloudflared -------------------------------------------------------------------------------------------------
@@ -60,7 +56,7 @@ for pod in $PODS; do
 done
 [[ "$READY" -gt 0 && "$READY" -ge "$WANT" ]] || fail "$READY of ${WANT:-?} cloudflared pods are connected to Cloudflare"
 
-# --- 2.-5. the public address, from this machine ------------------------------------------------------------------------
+# --- 2.-4. the public address, from this machine ------------------------------------------------------------------------
 # get <url> [curl args...]: sets BODY and CODE. CODE is 000 when the request failed (no DNS record, TLS error...).
 # curl's own error (no DNS record, TLS error...) goes into BODY only when the request failed.
 get() {
@@ -114,9 +110,7 @@ for check in "/grafana/api/health|\"database\"|Grafana" "/prometheus/-/ready|Pro
 done
 echo "Grafana, Prometheus and VictoriaLogs are not on the public address"
 
-[[ -z "$NGROK_HOST" ]] || check_health "$NGROK_HOST" "ngrok"
-
-# --- 6. the caller's address ----------------------------------------------------------------------------------------
+# --- 5. the caller's address ----------------------------------------------------------------------------------------
 if [[ -z "$CHECK_CALLER" ]]; then
   echo "PASS: https://$HOST reaches the portal through Cloudflare (caller address not checked)."
   exit 0
@@ -181,11 +175,6 @@ NEEDED=$(trust_proxy_for "$CHAIN" "$CALLER")
 CURRENT=$("${KUBECTL[@]}" get deployment --namespace id-verification-portal -l app.kubernetes.io/name=id-verification-portal -o \
   'jsonpath={.items[0].spec.template.spec.containers[?(@.name=="portal")].env[?(@.name=="TRUST_PROXY")].value}' 2>/dev/null) || CURRENT=""
 
-if [[ -n "$NGROK_HOST" ]]; then
-  echo_headers "$NGROK_HOST"
-  NGROK_CHAIN=$(header X-Forwarded-For)
-  echo "X-Forwarded-For through ngrok: ${NGROK_CHAIN:-<none>} (TRUST_PROXY that finds $CALLER: $(trust_proxy_for "$NGROK_CHAIN" "$CALLER" | grep . || echo 'none; ngrok may have used another address family'))"
-fi
 
 if [[ -z "$CURRENT" ]]; then
   echo "WARN: could not read the portal's TRUST_PROXY (namespace id-verification-portal); it must be $NEEDED behind Cloudflare" >&2

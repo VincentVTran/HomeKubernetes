@@ -36,7 +36,6 @@ Internet ──https──> Cloudflare edge ──tunnel──> cloudflared pods
 ### Checking it: `verify-tunnel.sh`
 ```
 ./verify-tunnel.sh                                   # the first hostname in tunnel-config.yaml
-./verify-tunnel.sh --ngrok-host <name>.ngrok-free.dev   # also check the ngrok address, while both run
 ./verify-tunnel.sh --skip-caller-address             # read-only: don't add the temporary route
 ```
 It checks that every cloudflared pod is connected, that `https://<host>/api/health` answers `{"ok":true}` through Cloudflare
@@ -60,97 +59,29 @@ unchanged, so `trustProxy: 1` is right.
 
 ---
 
-## Moving from ngrok: the runbook
+## Setting it up from scratch
+For a rebuilt cluster or a new tunnel. The domain is `vtranlabs.com`, registered with Cloudflare Registrar (2026-10-24), so
+its DNS is on Cloudflare already. The portal is at `rental.vtranlabs.com`; other apps get their own subdomains.
 
-ngrok keeps running until the very end, so the portal stays up throughout and every phase can be undone. Do the phases in
-order, and don't start one until the previous one's check passes. `<domain>` is your Wix domain and `portal.<domain>` the
-portal's new address (any subdomain works; the website on the root domain and `www` is not touched).
+1. In Cloudflare's dashboard, check once: **Domain Registration** → **Manage domain** has **Auto Renew** on (every app's
+   address depends on the domain), and **SSL/TLS** → **Edge Certificates** has **Always Use HTTPS** on.
+2. On your laptop (`cloudflared` from https://github.com/cloudflare/cloudflared/releases, any recent version):
+   ```
+   cloudflared tunnel login                 # browser: pick vtranlabs.com; writes ~/.cloudflared/cert.pem (keep it on the laptop)
+   cloudflared tunnel create home           # writes ~/.cloudflared/<tunnel-id>.json: the tunnel's credentials
+   ```
+3. Add `CLOUDFLARE_TUNNEL_CREDENTIALS=~/.cloudflared/<tunnel-id>.json` to `../.env`.
+4. `kubectl apply -f ../GlooGateway/routes/external-routes.yaml`, then `./install-cloudflared.sh`.
+5. `cloudflared tunnel route dns home rental.vtranlabs.com`. This makes the proxied CNAME `rental` → `<tunnel-id>.cfargotunnel.com`.
+6. `./verify-tunnel.sh`. If it fails on `TRUST_PROXY`, set the portal chart's `trustProxy` to the value it names and deploy.
+7. Bouncr must allow `https://rental.vtranlabs.com` as an origin for the venue, or the Applicant Page fails with
+   `UNAUTHORIZED (19)` (visible with `?debug=1`).
+8. In the `id-verification-portal` repository, `DEPLOY_PUBLIC_URL=https://rental.vtranlabs.com` in its `.env`, then
+   `npm run deploy`, and run its `docs/smoke-checklist.md` on a phone.
 
-### Phase 0 (ahead of time): ask Bouncr to allow the new origin
-Ask Bouncr to allow `https://portal.<domain>` as an origin for the venue, **in addition to** the ngrok address. Until they do,
-the Applicant Page fails with `UNAUTHORIZED (19)` (visible with `?debug=1`). Only phase 5 needs it, but you can't control how
-long it takes. Phases 1–4 can go ahead meanwhile.
-
-### Phase 1: copy the Wix DNS into Cloudflare (nothing changes yet)
-1. Sign up at https://dash.cloudflare.com (the Free plan is enough), **Add a domain**, enter `<domain>`, and pick **Free**.
-2. Cloudflare scans the existing records. In another tab, open Wix: **Domains** → the `⋯` (Domain Actions) next to the domain →
-   **Manage DNS Records**. (Labels differ a little between Wix's dashboard versions.)
-3. Go through Wix's list **row by row** and make sure Cloudflare has the same record (type, name, value, priority for MX).
-   The scan often misses some: look especially at **MX**, **TXT** (SPF `v=spf1…`, DMARC on `_dmarc`, Google/Microsoft
-   verification) and **CNAME**s for DKIM (`…._domainkey`). Add anything missing by hand.
-4. Set the records for the Wix website, the root `A` record(s) and the `www` CNAME (e.g. to `cdn1.wixdns.net`), to **DNS only**
-   (grey cloud). Wix serves its own certificate, and Cloudflare's proxy in front of it causes certificate and redirect errors.
-   Set the mail-related records to DNS only too (Cloudflare does that for MX by itself).
-5. If Wix shows DNSSEC as on for the domain, turn it off there and wait 24 hours before phase 2. Otherwise resolvers that
-   validate DNSSEC will reject the domain during the change.
-
-*Check:* every row in Wix's list is in Cloudflare. *Undo:* nothing has changed; delete the site from Cloudflare if you want.
-
-### Phase 2: point the domain at Cloudflare's nameservers
-1. Cloudflare's **Overview** for the domain shows two nameservers (`<name>.ns.cloudflare.com`).
-2. In Wix: **Domains** → `⋯` → **Advanced** → **Change Name Servers** (on some dashboards: **Manage DNS Records** → **Edit name
-   servers**, or "Point to another provider"). Choose custom nameservers and enter Cloudflare's two in place of Wix's.
-   Write down Wix's original nameservers first, for undo.
-3. Wait for Cloudflare to mark the domain **Active** (it emails you). Usually under an hour, at most 24 hours. Cloudflare's
-   **Check nameservers now** button speeds up the check.
-4. In Cloudflare: **SSL/TLS** → **Edge Certificates**: turn on **Always Use HTTPS**. Optionally turn on DNSSEC in Cloudflare
-   (**DNS** → **Settings**) and add the DS record it gives at Wix, if Wix offers that.
-
-*Check:* `dig +short NS <domain>` shows Cloudflare's two; the Wix site loads at `https://<domain>` and `https://www.<domain>`;
-an email sent to an address on the domain arrives. *Undo:* put Wix's nameservers back. The cluster hasn't changed.
-
-### Phase 3: start the tunnel next to ngrok
-On your laptop (`cloudflared` from https://github.com/cloudflare/cloudflared/releases, any recent version):
-```
-cloudflared tunnel login                 # browser: pick <domain>; writes ~/.cloudflared/cert.pem (keep it on the laptop)
-cloudflared tunnel create home           # writes ~/.cloudflared/<tunnel-id>.json: the tunnel's credentials
-```
-1. Add `CLOUDFLARE_TUNNEL_CREDENTIALS=~/.cloudflared/<tunnel-id>.json` to `../.env`.
-2. Replace `portal.example.com` with `portal.<domain>` in `tunnel-config.yaml` **and** in
-   `../GlooGateway/routes/external-routes.yaml` (where it sits next to the ngrok domain), then
-   `kubectl apply -f ../GlooGateway/routes/external-routes.yaml`.
-3. `./install-cloudflared.sh`
-4. `cloudflared tunnel route dns home portal.<domain>`. This makes the proxied CNAME `portal` → `<tunnel-id>.cfargotunnel.com`.
-5. `./verify-tunnel.sh --ngrok-host ezequiel-thirstless-johnnie.ngrok-free.dev`
-
-*Check:* `verify-tunnel.sh` passes, with both addresses serving the portal. Nothing the portal sends out has changed yet: links
-still use the ngrok address. *Undo:* remove the hostname from `external-routes.yaml` and apply it,
-`kubectl delete namespace cloudflared`, and delete the `portal` record in Cloudflare.
-
-### Phase 4: get the caller address right
-If `verify-tunnel.sh` failed on `TRUST_PROXY`, change the portal chart's `trustProxy` to the value it names, deploy that
-first (with the ngrok address still as `DEPLOY_PUBLIC_URL`), and run `verify-tunnel.sh` again.
-
-Then check it by hand: on a phone using mobile data (not your Wi-Fi), open `https://portal.<domain>/admin` and get the password
-wrong until it says "Too many sign-in attempts". Your laptop on Wi-Fi must still be able to sign in, which shows the attempts
-are counted per caller.
-
-### Phase 5: switch the portal to the new address
-Once Bouncr allows the new origin, in the `id-verification-portal` repository:
-1. Set `DEPLOY_PUBLIC_URL=https://portal.<domain>` in its `.env`.
-2. `npm run deploy -- --dry-run`, then `npm run deploy`.
-3. Sign in at `https://portal.<domain>/admin`. Everyone signs in again once: sign-in cookies belong to one address.
-4. Run `docs/smoke-checklist.md` on a phone with a Test ID, including a Lease's signing step.
-
-*Check:* new Verification Links start with `https://portal.<domain>/v/`, and the smoke checklist passes. *Undo:* put the ngrok
-address back in `DEPLOY_PUBLIC_URL` and `npm run deploy` (or `helm rollback`). Links made in between keep working, because the
-tunnel stays up.
-
-### Phase 6: let the ngrok links run out
-A Verification Link contains its full address, so links sent before phase 5 only work while ngrok is up. Leave ngrok running
-for `LINK_TTL_DAYS` after phase 5 (7 by default, see the portal's README). *Check:* no Applicant on the Admin Page was given a
-link before phase 5 that is still unexpired and unfinished.
-
-### Phase 7: remove ngrok
-In this order, so nothing is left behind on a finalizer:
-1. `kubectl delete -f ../GlooGateway/external-ngrok-ingress.yaml` and `kubectl delete -f ../TestDeployment/nginx-tunnel.yaml`.
-   Wait until `kubectl get ingress -A` shows neither (the operator removes their finalizers).
-2. Remove the ngrok domain from `../GlooGateway/routes/external-routes.yaml` and apply it.
-3. `helm uninstall ngrok-operator --namespace ngrok-operator`
-4. `kubectl get crd -o name | grep ngrok` and delete what's listed; then `kubectl delete namespace ngrok-operator`.
-5. In ngrok's dashboard, release the `*.ngrok-free.dev` domain. Remove `NGROK_API_KEY` and `NGROK_AUTHTOKEN` from `../.env`.
-6. Ask Bouncr to drop the ngrok origin.
-7. In git: delete `../NgrokTunnel/`, `../GlooGateway/external-ngrok-ingress.yaml` and `../TestDeployment/nginx-tunnel.yaml`.
-
-*Check:* `./verify-tunnel.sh` (no `--ngrok-host`) passes, and `kubectl get ingressclass,crd | grep -i ngrok` prints nothing.
-*Undo:* `../NgrokTunnel/install-ngrok.sh` and re-apply the Ingress from git history.
+## History: ngrok
+Until 2026-10-24 the portal was public through ngrok (`ezequiel-thirstless-johnnie.ngrok-free.dev`, the ngrok operator and
+an Ingress to the external gateway). It was removed in one go with nothing using it: the portal was switched to
+`rental.vtranlabs.com`, then the Ingress, the operator, its CRDs and namespace were deleted, along with `NgrokTunnel/`,
+`GlooGateway/external-ngrok-ingress.yaml` and `TestDeployment/nginx-tunnel.yaml`. Verification Links made before then use
+the ngrok address and no longer open. The files are in git history, before the commit that removed them.

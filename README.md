@@ -30,9 +30,8 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${CONTROL_PLANE_IP}:6443 K3S_TOKE
 
 # Public access (Cloudflare Tunnel)
 The portal is reached from the internet through a Cloudflare Tunnel to Gloo's external gateway; nothing is opened on the LAN.
-Setup, adding hostnames, checking it (`./CloudflareTunnel/verify-tunnel.sh`) and the runbook for moving off ngrok (and for
-pointing the Wix domain at Cloudflare) are in `CloudflareTunnel/README.md`. ngrok (`NgrokTunnel/`) runs alongside until that
-runbook retires it.
+Setup, adding hostnames and checking it (`./CloudflareTunnel/verify-tunnel.sh`) are in `CloudflareTunnel/README.md`, as is
+the domain, vtranlabs.com, which is registered with Cloudflare. ngrok was removed on 2026-10-24.
 
 # Logs and traces (OpenTelemetry)
 Install in this order, then verify (each folder's README has the details):
