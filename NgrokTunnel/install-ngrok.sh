@@ -1,4 +1,5 @@
 #!/bin/bash
+# Being retired: the Cloudflare Tunnel replaces ngrok. See ../CloudflareTunnel/README.md (phase 7 removes this folder).
 # Required in ../.env:
 #   NGROK_API_KEY=<your-api-key>
 #   NGROK_AUTHTOKEN=<your-authtoken>

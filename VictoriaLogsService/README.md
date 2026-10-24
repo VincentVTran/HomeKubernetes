@@ -7,7 +7,7 @@ Service `victoria-logs` on port 9428.
 - Written by: Logs from the gateway Collector over OTLP/HTTP: `http://victoria-logs.victoria-logs.svc.cluster.local:9428/insert/opentelemetry/v1/logs`.
 - Read by: Grafana (VictoriaLogs plugin) and LogsQL: `http://victoria-logs.victoria-logs.svc.cluster.local:9428` (`/select/logsql/query`).
 - Web UI on the home network at **http://192.168.2.4/logs** (the internal Gloo route in `../GlooGateway/routes/internal-routes.yaml`).
-  Only the read API (`/select/...`) is routed there, so nothing on the LAN can write or delete logs. No external access (nothing on the ngrok route).
+  Only the read API (`/select/...`) is routed there, so nothing on the LAN can write or delete logs. No external access (nothing on the public tunnel's route).
 - Resources: 128–256Mi memory, 50–500m CPU. Metrics (`vl_*`) are scraped by the existing Prometheus.
 
 ### Retention

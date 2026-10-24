@@ -1,4 +1,5 @@
 #!/bin/bash
+# Being retired: the Cloudflare Tunnel replaces ngrok. See ../CloudflareTunnel/README.md (phase 7 removes this folder).
 set -euo pipefail
 cd "$(dirname "$0")"
 

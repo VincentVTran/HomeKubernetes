@@ -27,7 +27,7 @@ sidecar:
   datasources:
     enabled: true           # :contentReference[oaicite:4]{index=4}
 
-# Home network only: the LAN IP above and the internal gateway route. Nothing on the external (ngrok) route.
+# Home network only: the LAN IP above and the internal gateway route. Nothing on the external (public tunnel) route.
 # Configure server root URL for dynamic subpath handling
 grafana.ini:
   server:

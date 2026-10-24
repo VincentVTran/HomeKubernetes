@@ -6,7 +6,7 @@ Grafana from chart `grafana/grafana` 10.0.0 (pinned in `chart-version`), image 1
 VictoriaLogs need Grafana 12.2 or newer, and the chart's default image is 12.1.1, so `grafana-values.yaml` pins the tag.
 
 - Home network only: the LoadBalancer IP `192.168.2.21` and the internal gateway route (`/grafana`). Nothing is on the
-  external (ngrok) route; keep it that way.
+  external (public tunnel) route; keep it that way.
 - Data sources, all provisioned from `grafana-values.yaml`:
 
   | Name | uid | Reads | Links |
