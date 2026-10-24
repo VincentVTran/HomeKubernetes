@@ -7,10 +7,9 @@ metadata:
     exposure: external
 spec:
   virtualHost:
-    # Both public tunnels reach the external gateway; the Host header picks this VirtualService.
+    # The Cloudflare Tunnel reaches the external gateway; the Host header picks this VirtualService.
     domains:
-      - 'portal.example.com'                          # Cloudflare Tunnel: replace with your portal hostname (as in ../../CloudflareTunnel/tunnel-config.yaml)
-      - 'ezequiel-thirstless-johnnie.ngrok-free.dev'  # ngrok: remove once ngrok is retired (../../CloudflareTunnel/README.md, phase 7)
+      - 'rental.vtranlabs.com'   # as in ../../CloudflareTunnel/tunnel-config.yaml
     routes:
       - matchers:
         - prefix: /
