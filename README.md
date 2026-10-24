@@ -28,6 +28,12 @@ curl -sfL https://get.k3s.io | K3S_URL=https://${CONTROL_PLANE_IP}:6443 K3S_TOKE
 ## To deploy app to cluster
 - `make deploy` to install the metal lb configurations
 
+# Public access (Cloudflare Tunnel)
+The portal is reached from the internet through a Cloudflare Tunnel to Gloo's external gateway; nothing is opened on the LAN.
+Setup, adding hostnames, checking it (`./CloudflareTunnel/verify-tunnel.sh`) and the runbook for moving off ngrok (and for
+pointing the Wix domain at Cloudflare) are in `CloudflareTunnel/README.md`. ngrok (`NgrokTunnel/`) runs alongside until that
+runbook retires it.
+
 # Logs and traces (OpenTelemetry)
 Install in this order, then verify (each folder's README has the details):
 ```
