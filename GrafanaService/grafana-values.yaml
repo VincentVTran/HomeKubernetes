@@ -122,7 +122,9 @@ dashboardProviders:
         orgId: 1
         folder: ""
         type: file
-        disableDeletion: true
+        # The files are the record: a dashboard whose file is removed (or renamed) is removed from Grafana too. Deleting one in the
+        # UI is still refused, since it is provisioned.
+        disableDeletion: false
         editable: false
         allowUiUpdates: false
         options:

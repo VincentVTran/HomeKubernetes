@@ -16,6 +16,12 @@ VictoriaLogs need Grafana 12.2 or newer, and the chart's default image is 12.1.1
   | VictoriaTraces | `victoriatraces` | `http://victoria-traces.victoria-traces.svc.cluster.local:10428/select/jaeger` (Jaeger type) | a span opens its log lines (`trace_id:="<id>"`) |
 
   The plugin is signed and is downloaded when the pod starts, so the pod needs internet access.
+- Removing or renaming a dashboard: delete or rename its file in `dashboards/` and the matching `--set-file` line in both
+  scripts, then run `./upgrade-grafana.sh`. Grafana then removes the old one (the `portal` provider has `disableDeletion: false`).
+  If it stays, an empty file of its old name is left on Grafana's volume, where the old file was mounted: Grafana still finds the
+  file, so it doesn't remove the dashboard. Delete that file (only if it is empty):
+  `kubectl -n grafana exec deploy/grafana -c grafana -- sh -c 'f=/var/lib/grafana/dashboards/portal/<old>.json; [ ! -s "$f" ] && rm "$f"'`.
+  This happened when the portal's dashboard was renamed to `applicant-portal`.
 - Dashboards: the cluster dashboard (Grafana.com 315) and **Applicant Portal** (`dashboards/applicant-portal.json`,
   uid `applicant-portal`):
   - request rate, error rate (share of 5xx) and p95 latency per route, from the app's
