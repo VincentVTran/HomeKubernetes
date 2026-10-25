@@ -13,7 +13,7 @@ metrics: 0.0.0.0:2000   # /ready (readiness probe, verify-tunnel.sh) and /metric
 #   - the same hostname in an external VirtualService's `domains` (../GlooGateway/routes/external-routes.yaml).
 # The original Host header is passed on unchanged, which is what Gloo matches.
 ingress:
-  - hostname: rental.vtranlabs.com   # the ID verification portal
+  - hostname: rental.vtranlabs.com   # the Applicant Portal
     service: http://external-gateway-proxy.gloo-system.svc.cluster.local:80
   # Anything else that reaches the tunnel gets a 404 and never touches the cluster.
   - service: http_status:404

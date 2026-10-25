@@ -7,7 +7,7 @@
 #   (first of all it prints the kubectl context it acts on, and each node's container log rotation from the kubelet's
 #   configz: containerLogMaxSize and containerLogMaxFiles, which bound the pod log files the agent reads);
 #   5. checks Grafana through its API (port-forward, admin login from the `grafana-admin` Secret): both data sources
-#      are healthy and linked to each other, the "ID verification portal" dashboard is provisioned, and the log just
+#      are healthy and linked to each other, the "Applicant Portal" dashboard is provisioned, and the log just
 #      sent is found through Grafana by its reference code (`trace_id:<first 8 hex>*`). Skip with --skip-grafana.
 # Everything runs from a short-lived curl pod in the `otel` namespace, because the Collector's receivers bind the
 # pod IP (so `kubectl port-forward` to the Collector does not work).
@@ -176,9 +176,9 @@ grep -q '"tracesToLogsV2":{[^}]*"datasourceUid":"victorialogs"' <<<"$traces_ds" 
   || gfail "VictoriaTraces data source has no trace-to-logs link to VictoriaLogs"
 echo "log-to-trace and trace-to-logs links are set"
 
-dashboard=$(gf /api/dashboards/uid/id-verification-portal)
-grep -q '"title":"ID verification portal"' <<<"$dashboard" || gfail "dashboard id-verification-portal has the wrong title"
-echo "dashboard \"ID verification portal\" is provisioned"
+dashboard=$(gf /api/dashboards/uid/applicant-portal)
+grep -q '"title":"Applicant Portal"' <<<"$dashboard" || gfail "dashboard applicant-portal has the wrong title"
+echo "dashboard \"Applicant Portal\" is provisioned"
 
 # The README's recipe: search VictoriaLogs through Grafana by reference code.
 REFERENCE=${TRACE_ID:0:8}

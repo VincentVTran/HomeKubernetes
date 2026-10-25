@@ -16,14 +16,14 @@ VictoriaLogs need Grafana 12.2 or newer, and the chart's default image is 12.1.1
   | VictoriaTraces | `victoriatraces` | `http://victoria-traces.victoria-traces.svc.cluster.local:10428/select/jaeger` (Jaeger type) | a span opens its log lines (`trace_id:="<id>"`) |
 
   The plugin is signed and is downloaded when the pod starts, so the pod needs internet access.
-- Dashboards: the cluster dashboard (Grafana.com 315) and **ID verification portal** (`dashboards/id-verification-portal.json`,
-  uid `id-verification-portal`):
+- Dashboards: the cluster dashboard (Grafana.com 315) and **Applicant Portal** (`dashboards/applicant-portal.json`,
+  uid `applicant-portal`):
   - request rate, error rate (share of 5xx) and p95 latency per route, from the app's
     `http_server_request_duration_seconds_*` metrics in Prometheus. The cluster's Prometheus job has no `honor_labels`, so
-    the app's job arrives as `exported_job` (`id-verification-portal`, or `id-verification-portal/id-verification-portal`
+    the app's job arrives as `exported_job` (`applicant-portal`, or `applicant-portal/applicant-portal`
     when the Collector adds the namespace); the queries match both;
   - **Recent errors**: the latest log lines with severity error or worse from the namespace in the dashboard's
-    *Namespace (logs)* box (default `id-verification-portal`), with their reference code. Click the reference code or
+    *Namespace (logs)* box (default `applicant-portal`), with their reference code. Click the reference code or
     the trace-id to open the trace.
   - **Recent logs**: the latest 200 lines from the same namespace at every level except debug, with a colour-coded
     level (info, warn, error, and Unspecified for anything written outside the server's logger, such as Node's warnings
@@ -72,7 +72,7 @@ The existing install was on 12.1.1 without a pinned chart version or an admin Se
 ### Verify
 `../OtelService/verify-telemetry.sh` sends a log and a span through the Collector, finds them in the stores, and then
 checks Grafana through its API (port-forward, admin login from the Secret): both data sources are healthy and linked to
-each other, the ID verification portal dashboard is provisioned, and the log it just sent is found through Grafana by
+each other, the Applicant Portal dashboard is provisioned, and the log it just sent is found through Grafana by
 its reference code. Both scripts here and the verify script take `--kube-context <ctx>` and honour `KUBECONFIG`.
 
 ### Finding a request by reference code
@@ -90,4 +90,4 @@ of the request's trace-id.
 4. From any span, click its log icon (**Related logs**) to go back to the log lines of that trace.
 
 With the full trace-id (from the `traceresponse` or `Server-Timing` response header) search `trace_id:="<32 hex>"`.
-Recent errors are also listed, with their codes, at the bottom of the **ID verification portal** dashboard.
+Recent errors are also listed, with their codes, at the bottom of the **Applicant Portal** dashboard.

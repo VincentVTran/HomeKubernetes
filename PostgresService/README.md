@@ -10,8 +10,12 @@ cd PostgresService && ./install-postgres.sh
 ### Add a database for an app
 Each app gets its own database and login. Passwords are generated and never written to this repository:
 ```
-./add-app-database.sh id-verification-portal id-verification-portal
+./add-app-database.sh <app> <app-namespace>
 ```
+The Applicant Portal's database was made as `./add-app-database.sh id-verification-portal id-verification-portal` (its name before it
+became the Applicant Portal), so it is `id_verification_portal`, with the login `id-verification-portal-db-login`. It keeps those names: the
+portal's own deploy copies its URL to `applicant-portal-db` in namespace `applicant-portal`. Don't run the script for `applicant-portal`,
+which would make a second, empty database.
 The app reads its connection URL from the key `uri` of Secret `<app>-db` in its own namespace. That Secret is a copy (pods cannot read
 Secrets in the `postgres` namespace), so to change an app's password: delete `<app>-db-login` in `postgres`, run the script again, and
 restart the app.

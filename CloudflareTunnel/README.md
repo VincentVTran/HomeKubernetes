@@ -76,7 +76,7 @@ its DNS is on Cloudflare already. The portal is at `rental.vtranlabs.com`; other
 6. `./verify-tunnel.sh`. If it fails on `TRUST_PROXY`, set the portal chart's `trustProxy` to the value it names and deploy.
 7. Bouncr must allow `https://rental.vtranlabs.com` as an origin for the venue, or the Applicant Page fails with
    `UNAUTHORIZED (19)` (visible with `?debug=1`).
-8. In the `id-verification-portal` repository, `DEPLOY_PUBLIC_URL=https://rental.vtranlabs.com` in its `.env`, then
+8. In the `applicant-portal` repository, `DEPLOY_PUBLIC_URL=https://rental.vtranlabs.com` in its `.env`, then
    `npm run deploy`, and run its `docs/smoke-checklist.md` on a phone.
 
 ## History: ngrok

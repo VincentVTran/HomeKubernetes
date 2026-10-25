@@ -171,13 +171,13 @@ echo "X-Forwarded-For at the portal: ${CHAIN:-<none>}"
 NEEDED=$(trust_proxy_for "$CHAIN" "$CALLER")
 [[ -n "$NEEDED" ]] || fail "the caller $CALLER is not in X-Forwarded-For, so no TRUST_PROXY finds them"
 
-# The portal chart's Deployment (label app.kubernetes.io/name=id-verification-portal), container `portal`.
-CURRENT=$("${KUBECTL[@]}" get deployment --namespace id-verification-portal -l app.kubernetes.io/name=id-verification-portal -o \
+# The portal chart's Deployment (label app.kubernetes.io/name=applicant-portal), container `portal`.
+CURRENT=$("${KUBECTL[@]}" get deployment --namespace applicant-portal -l app.kubernetes.io/name=applicant-portal -o \
   'jsonpath={.items[0].spec.template.spec.containers[?(@.name=="portal")].env[?(@.name=="TRUST_PROXY")].value}' 2>/dev/null) || CURRENT=""
 
 
 if [[ -z "$CURRENT" ]]; then
-  echo "WARN: could not read the portal's TRUST_PROXY (namespace id-verification-portal); it must be $NEEDED behind Cloudflare" >&2
+  echo "WARN: could not read the portal's TRUST_PROXY (namespace applicant-portal); it must be $NEEDED behind Cloudflare" >&2
 elif [[ "$CURRENT" != "$NEEDED" ]]; then
   fail "the portal runs with TRUST_PROXY=$CURRENT, which picks the wrong address behind Cloudflare; it must be $NEEDED (chart value trustProxy)"
 else

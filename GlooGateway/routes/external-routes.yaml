@@ -17,6 +17,6 @@ spec:
           single:
             kube:
               ref:
-                name: id-verification-portal
-                namespace: id-verification-portal
+                name: applicant-portal
+                namespace: applicant-portal
               port: 80
