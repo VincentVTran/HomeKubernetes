@@ -1,9 +1,9 @@
 {
-  "uid": "id-verification-portal",
-  "title": "ID verification portal",
-  "description": "Requests, errors and slow requests of the ID verification portal, and its recent error logs with reference codes. Provisioned from HomeKubernetes/GrafanaService/dashboards; edit the file, not this dashboard.",
+  "uid": "applicant-portal",
+  "title": "Applicant Portal",
+  "description": "Requests, errors and slow requests of the Applicant Portal, and its recent error logs with reference codes. Provisioned from HomeKubernetes/GrafanaService/dashboards; edit the file, not this dashboard.",
   "tags": [
-    "id-verification-portal"
+    "applicant-portal"
   ],
   "editable": false,
   "schemaVersion": 41,
@@ -36,10 +36,10 @@
         "name": "namespace",
         "label": "Namespace (logs)",
         "type": "textbox",
-        "query": "id-verification-portal",
+        "query": "applicant-portal",
         "current": {
-          "text": "id-verification-portal",
-          "value": "id-verification-portal"
+          "text": "applicant-portal",
+          "value": "applicant-portal"
         },
         "hide": 0
       }
@@ -94,7 +94,7 @@
             "type": "prometheus",
             "uid": "${prometheus}"
           },
-          "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?id-verification-portal\"}[$__rate_interval]))",
+          "expr": "sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?applicant-portal\"}[$__rate_interval]))",
           "legendFormat": "{{http_route}}",
           "range": true
         }
@@ -149,7 +149,7 @@
             "type": "prometheus",
             "uid": "${prometheus}"
           },
-          "expr": "(sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?id-verification-portal\", http_response_status_code=~\"5..\"}[$__rate_interval])) or sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?id-verification-portal\"}[$__rate_interval])) * 0) / sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?id-verification-portal\"}[$__rate_interval]))",
+          "expr": "(sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?applicant-portal\", http_response_status_code=~\"5..\"}[$__rate_interval])) or sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?applicant-portal\"}[$__rate_interval])) * 0) / sum by (http_route) (rate(http_server_request_duration_seconds_count{exported_job=~\"(.+/)?applicant-portal\"}[$__rate_interval]))",
           "legendFormat": "{{http_route}}",
           "range": true
         }
@@ -203,7 +203,7 @@
             "type": "prometheus",
             "uid": "${prometheus}"
           },
-          "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{exported_job=~\"(.+/)?id-verification-portal\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (http_route, le) (rate(http_server_request_duration_seconds_bucket{exported_job=~\"(.+/)?applicant-portal\"}[$__rate_interval])))",
           "legendFormat": "{{http_route}}",
           "range": true
         }

@@ -7,8 +7,9 @@ metadata:
     exposure: external
 spec:
   virtualHost:
+    # The Cloudflare Tunnel reaches the external gateway; the Host header picks this VirtualService.
     domains:
-      - 'ezequiel-thirstless-johnnie.ngrok-free.dev'
+      - 'rental.vtranlabs.com'   # as in ../../CloudflareTunnel/tunnel-config.yaml
     routes:
       - matchers:
         - prefix: /
@@ -16,6 +17,6 @@ spec:
           single:
             kube:
               ref:
-                name: id-verification-portal
-                namespace: id-verification-portal
+                name: applicant-portal
+                namespace: applicant-portal
               port: 80

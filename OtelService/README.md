@@ -64,7 +64,7 @@ checks that the secret-bearing attributes it sent were redacted, and prints each
 First it prints the kubectl context it acts on and each node's container log rotation (the kubelet's
 `containerLogMaxSize` and `containerLogMaxFiles`, read from `/api/v1/nodes/<node>/proxy/configz`).
 It then checks Grafana through its API (port-forward, admin login from the `grafana-admin` Secret): both data sources
-are healthy and linked to each other, the ID verification portal dashboard is provisioned, and the log it just sent is
+are healthy and linked to each other, the Applicant Portal dashboard is provisioned, and the log it just sent is
 found through Grafana by its reference code. Pass `--skip-grafana` before Grafana is installed. It exits non-zero on
 any failure. Run it after every install or upgrade.
 

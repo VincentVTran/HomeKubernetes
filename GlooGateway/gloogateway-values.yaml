@@ -25,7 +25,7 @@ gatewayProxies:
       customHttpGateway:
         virtualServiceSelector:
           exposure: internal
-  # External gateway — not exposed on the LAN; ngrok tunnels to it
+  # External gateway — not exposed on the LAN; the Cloudflare Tunnel reaches it
   externalGatewayProxy:
     service:
       type: ClusterIP
